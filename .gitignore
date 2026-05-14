@@ -160,3 +160,5 @@ prisma/dev.db
 npm-debug.log*
 
 
+
+/src/generated/prisma
