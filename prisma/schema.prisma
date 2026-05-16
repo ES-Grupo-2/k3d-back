@@ -14,8 +14,24 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  OPERACIONAL
+  GERENTE
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id            Int   @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          Role     @default(OPERACIONAL)
+
+  // --- Fluxo de Verificação de Email ---
+  is_verified             Boolean   @default(false)
+  verification_code       String?
+  verification_expires_at DateTime? 
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("users")
 }
