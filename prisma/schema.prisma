@@ -25,7 +25,6 @@ model User {
   password_hash String
   role          Role     @default(OPERACIONAL)
 
-  // --- Fluxo de Verificação de Email ---
   is_verified             Boolean   @default(false)
   verification_code       String?
   verification_expires_at DateTime? 
