@@ -7,4 +7,6 @@ export async function authRoutes(app: FastifyInstance) {
   
   app.post('/verify', AuthController.verifyEmailHandler);
 
+  app.post('/login', AuthController.loginHandler);
+
 }

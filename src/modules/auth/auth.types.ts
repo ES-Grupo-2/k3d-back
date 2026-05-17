@@ -11,5 +11,11 @@ export const verifyEmailSchema = z.object({
   code: z.string().length(6, 'O código deve ter 6 dígitos'),
 });
 
+export const loginSchema = z.object({
+  email: z.string().email('Formato de e-mail inválido'),
+  password: z.string().min(1, 'A senha é obrigatória'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
