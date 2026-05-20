@@ -1,8 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { prisma } from '../../lib/clientPrisma';
-import { LoginInput, RegisterInput, VerifyEmailInput } from './auth.types';
-import { sendVerificationEmail } from '../../utils/email';
+import { LoginInput, RegisterInput } from './auth.types';
 import { AppError } from '../../utils/errors';
 
 export class AuthService {
@@ -14,21 +13,13 @@ export class AuthService {
     }
 
     const password_hash = await bcrypt.hash(data.password, 10);
-    
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-    await sendVerificationEmail(data.email, verificationCode);
 
     const newUser = await prisma.user.create({
       data: {
+        name: data.name,
         email: data.email,
         password_hash,
-        role: data.role || 'OPERACIONAL',
-        is_verified: false,
-        verification_code: verificationCode,
-        verification_expires_at: expiresAt,
+        role: data.role,
       },
     });
 
@@ -36,28 +27,6 @@ export class AuthService {
       message: 'Usuário criado com sucesso!', 
       userId: newUser.id 
     };
-  }
-
-  static async verifyEmail(data: VerifyEmailInput) {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-
-    if (!user) throw new AppError('Usuário não encontrado', 404);
-    if (user.is_verified) throw new AppError('Conta já verificada', 409);
-    if (user.verification_code !== data.code) throw new AppError('Código inválido', 400);
-    if (!user.verification_expires_at || new Date() > user.verification_expires_at) {
-      throw new AppError('Código expirado', 400);
-    }
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        is_verified: true,
-        verification_code: null,
-        verification_expires_at: null,
-      },
-    });
-
-    return { message: 'Conta ativada com sucesso!' };
   }
 
   static async login(data: LoginInput) {
@@ -70,10 +39,6 @@ export class AuthService {
     const passwordMatches = await bcrypt.compare(data.password, user.password_hash);
     if (!passwordMatches) {
       throw new AppError('Credenciais inválidas', 401);
-    }
-
-    if (!user.is_verified) {
-      throw new AppError('Conta ainda não verificada', 403);
     }
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -104,9 +69,9 @@ export class AuthService {
       token,
       user: {
         id: user.id,
+        name: user.name,
         email: user.email,
         role: user.role,
-        isVerified: user.is_verified,
       },
     };
   }
