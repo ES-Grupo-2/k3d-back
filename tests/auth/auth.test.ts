@@ -1,10 +1,10 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildApp } from '../../src/app';
-import { prisma } from '../../src/lib/clientPrisma';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { buildApp } from "../../src/app";
+import { prisma } from "../../src/lib/clientPrisma";
 
-vi.mock('../../src/lib/clientPrisma', () => ({
+vi.mock("../../src/lib/clientPrisma", () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
@@ -18,24 +18,24 @@ const userRepository = vi.mocked(prisma.user);
 
 const baseUser = {
   id: 1,
-  name: 'Test User',
-  email: 'user@email.com',
-  password_hash: '',
-  role: 'OPERACIONAL',
+  name: "Test User",
+  email: "user@email.com",
+  password_hash: "",
+  role: "OPERACIONAL",
   created_at: new Date(),
   updated_at: new Date(),
 };
 
-function authToken(role = 'GERENTE') {
+function authToken(role = "GERENTE") {
   return jwt.sign(
     {
-      email: 'manager@email.com',
+      email: "manager@email.com",
       role,
     },
-    'test-secret',
+    "test-secret",
     {
-      subject: '99',
-      expiresIn: '8h',
+      subject: "99",
+      expiresIn: "8h",
     },
   );
 }
@@ -45,7 +45,7 @@ async function injectPost(url: string, payload: unknown, token?: string) {
 
   try {
     return await app.inject({
-      method: 'POST',
+      method: "POST",
       url,
       payload,
       headers: token ? { authorization: `Bearer ${token}` } : undefined,
@@ -56,8 +56,8 @@ async function injectPost(url: string, payload: unknown, token?: string) {
 }
 
 beforeEach(() => {
-  process.env.JWT_SECRET = 'test-secret';
-  process.env.JWT_EXPIRES_IN = '8h';
+  process.env.JWT_SECRET = "test-secret";
+  process.env.JWT_EXPIRES_IN = "8h";
   vi.clearAllMocks();
 });
 
@@ -65,134 +65,162 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('auth routes', () => {
-  describe('POST /register', () => {
-    it('returns 201 and creates a user', async () => {
+describe("auth routes", () => {
+  describe("POST /register", () => {
+    it("returns 201 and creates a user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
       userRepository.create.mockResolvedValue({
         ...baseUser,
         id: 10,
-        name: 'New User',
-        email: 'new@email.com',
-        role: 'GERENTE',
+        name: "New User",
+        email: "new@email.com",
+        role: "GERENTE",
       });
 
-      const response = await injectPost('/register', {
-        name: 'New User',
-        email: 'new@email.com',
-        password: 'password123',
-        role: 'GERENTE',
-      }, authToken('GERENTE'));
+      const response = await injectPost(
+        "/register",
+        {
+          name: "New User",
+          email: "new@email.com",
+          password: "password123",
+          role: "GERENTE",
+        },
+        authToken("GERENTE"),
+      );
 
       expect(response.statusCode).toBe(201);
-      expect(response.json()).toEqual({
-        message: 'Usuário criado com sucesso!',
-        userId: 10,
+      expect(response.json()).toMatchObject({
+        user: {
+          id: 10,
+          name: "New User",
+          email: "new@email.com",
+          role: "GERENTE",
+        },
       });
       expect(userRepository.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          name: 'New User',
-          email: 'new@email.com',
-          role: 'GERENTE',
+          name: "New User",
+          email: "new@email.com",
+          role: "GERENTE",
         }),
       });
     });
 
-    it('returns 401 when authorization token is missing', async () => {
-      const response = await injectPost('/register', {
-        name: 'New User',
-        email: 'new@email.com',
-        password: 'password123',
-        role: 'OPERACIONAL',
+    it("returns 401 when authorization token is missing", async () => {
+      const response = await injectPost("/register", {
+        name: "New User",
+        email: "new@email.com",
+        password: "password123",
+        role: "OPERACIONAL",
       });
 
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
-        error: 'Token não informado',
+        error: "Token não informado",
       });
       expect(userRepository.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 401 when authorization token is invalid', async () => {
-      const response = await injectPost('/register', {
-        name: 'New User',
-        email: 'new@email.com',
-        password: 'password123',
-        role: 'OPERACIONAL',
-      }, 'invalid-token');
+    it("returns 401 when authorization token is invalid", async () => {
+      const response = await injectPost(
+        "/register",
+        {
+          name: "New User",
+          email: "new@email.com",
+          password: "password123",
+          role: "OPERACIONAL",
+        },
+        "invalid-token",
+      );
 
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
-        error: 'Token inválido',
+        error: "Token inválido",
       });
       expect(userRepository.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 403 when user role cannot register users', async () => {
-      const response = await injectPost('/register', {
-        name: 'New User',
-        email: 'new@email.com',
-        password: 'password123',
-        role: 'OPERACIONAL',
-      }, authToken('OPERACIONAL'));
+    it("returns 403 when user role cannot register users", async () => {
+      const response = await injectPost(
+        "/register",
+        {
+          name: "New User",
+          email: "new@email.com",
+          password: "password123",
+          role: "OPERACIONAL",
+        },
+        authToken("OPERACIONAL"),
+      );
 
       expect(response.statusCode).toBe(403);
       expect(response.json()).toEqual({
-        error: 'Acesso negado',
+        error: "Acesso negado",
       });
       expect(userRepository.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 400 for invalid body', async () => {
-      const response = await injectPost('/register', {
-        email: 'invalid-email',
-        password: 'short',
-      }, authToken('GERENTE'));
+    it("returns 400 for invalid body", async () => {
+      const response = await injectPost(
+        "/register",
+        {
+          email: "invalid-email",
+          password: "short",
+        },
+        authToken("GERENTE"),
+      );
 
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({
-        error: 'Dados inválidos',
+        error: "Dados inválidos",
       });
       expect(userRepository.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when role is missing', async () => {
-      const response = await injectPost('/register', {
-        name: 'New User',
-        email: 'new@email.com',
-        password: 'password123',
-      }, authToken('GERENTE'));
+    it("returns 400 when role is missing", async () => {
+      const response = await injectPost(
+        "/register",
+        {
+          name: "New User",
+          email: "new@email.com",
+          password: "password123",
+        },
+        authToken("GERENTE"),
+      );
 
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({
-        error: 'Dados inválidos',
+        error: "Dados inválidos",
       });
       expect(userRepository.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 409 for duplicated email', async () => {
+    it("returns 409 for duplicated email", async () => {
       userRepository.findUnique.mockResolvedValue(baseUser);
 
-      const response = await injectPost('/register', {
-        name: 'Test User',
-        email: 'user@email.com',
-        password: 'password123',
-        role: 'OPERACIONAL',
-      }, authToken('GERENTE'));
+      const response = await injectPost(
+        "/register",
+        {
+          name: "Test User",
+          email: "user@email.com",
+          password: "password123",
+          role: "OPERACIONAL",
+        },
+        authToken("GERENTE"),
+      );
 
       expect(response.statusCode).toBe(409);
       expect(response.json()).toEqual({
-        error: 'E-mail já cadastrado!',
+        error: "E-mail já cadastrado!",
       });
       expect(userRepository.create).not.toHaveBeenCalled();
     });
   });
 
-  describe('POST /verify', () => {
-    it('returns 404 because email verification is no longer exposed', async () => {
-      const response = await injectPost('/verify', {
-        email: 'user@email.com',
-        code: '123456',
+  describe("POST /verify", () => {
+    it("returns 404 because email verification is no longer exposed", async () => {
+      const response = await injectPost("/verify", {
+        email: "user@email.com",
+        code: "123456",
       });
 
       expect(response.statusCode).toBe(404);
@@ -201,81 +229,81 @@ describe('auth routes', () => {
     });
   });
 
-  describe('POST /login', () => {
-    it('returns 200, a JWT token, and user data for valid credentials', async () => {
-      const passwordHash = await bcrypt.hash('password123', 10);
+  describe("POST /login", () => {
+    it("returns 200, a JWT token, and user data for valid credentials", async () => {
+      const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,
         password_hash: passwordHash,
       });
 
-      const response = await injectPost('/login', {
-        email: 'user@email.com',
-        password: 'password123',
+      const response = await injectPost("/login", {
+        email: "user@email.com",
+        password: "password123",
       });
       const body = response.json();
-      const decoded = jwt.verify(body.token, 'test-secret');
+      const decoded = jwt.verify(body.token, "test-secret");
 
       expect(response.statusCode).toBe(200);
       expect(body).toMatchObject({
-        message: 'Login realizado com sucesso!',
+        token: expect.any(String),
         user: {
           id: 1,
-          name: 'Test User',
-          email: 'user@email.com',
-          role: 'OPERACIONAL',
+          name: "Test User",
+          email: "user@email.com",
+          role: "OPERACIONAL",
         },
       });
-      expect(body.user).not.toHaveProperty('isVerified');
-      expect(typeof body.token).toBe('string');
+      expect(body.user).not.toHaveProperty("isVerified");
+      expect(typeof body.token).toBe("string");
       expect(decoded).toMatchObject({
-        sub: '1',
-        email: 'user@email.com',
-        role: 'OPERACIONAL',
+        sub: "1",
+        email: "user@email.com",
+        role: "OPERACIONAL",
       });
     });
 
-    it('returns 401 for unknown user', async () => {
+    it("returns 401 for unknown user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
 
-      const response = await injectPost('/login', {
-        email: 'missing@email.com',
-        password: 'password123',
+      const response = await injectPost("/login", {
+        email: "missing@email.com",
+        password: "password123",
       });
 
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
-        error: 'Credenciais inválidas',
+        error: "Credenciais inválidas",
       });
     });
 
-    it('returns 401 for wrong password', async () => {
-      const passwordHash = await bcrypt.hash('password123', 10);
+    it("returns 401 for wrong password", async () => {
+      const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,
         password_hash: passwordHash,
       });
 
-      const response = await injectPost('/login', {
-        email: 'user@email.com',
-        password: 'wrong-password',
+      const response = await injectPost("/login", {
+        email: "user@email.com",
+        password: "wrong-password",
       });
 
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
-        error: 'Credenciais inválidas',
+        error: "Credenciais inválidas",
       });
     });
 
-    it('returns 400 for invalid body', async () => {
-      const response = await injectPost('/login', {
-        email: 'invalid-email',
-        password: '',
+    it("returns 400 for invalid body", async () => {
+      const response = await injectPost("/login", {
+        email: "invalid-email",
+        password: "",
       });
 
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({
-        error: 'Dados inválidos',
+        error: "Dados inválidos",
       });
     });
   });
