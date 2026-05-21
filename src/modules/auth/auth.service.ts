@@ -1,15 +1,16 @@
-import bcrypt from 'bcryptjs';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import { prisma } from '../../lib/clientPrisma';
-import { LoginInput, RegisterInput } from './auth.types';
-import { AppError } from '../../utils/errors';
+import bcrypt from "bcryptjs";
+import jwt, { SignOptions } from "jsonwebtoken";
+import { prisma } from "../../lib/clientPrisma";
+import { LoginInput, RegisterInput } from "./auth.types";
+import { AppError } from "../../utils/errors";
 
 export class AuthService {
-  
   static async register(data: RegisterInput) {
-    const userExists = await prisma.user.findUnique({ where: { email: data.email } });
+    const userExists = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
     if (userExists) {
-      throw new AppError('E-mail já cadastrado!', 409);
+      throw new AppError("E-mail já cadastrado!", 409);
     }
 
     const password_hash = await bcrypt.hash(data.password, 10);
@@ -20,12 +21,18 @@ export class AuthService {
         email: data.email,
         password_hash,
         role: data.role,
+        created_at: new Date(),
       },
     });
 
-    return { 
-      message: 'Usuário criado com sucesso!', 
-      userId: newUser.id 
+    return {
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: newUser.created_at,
+      },
     };
   }
 
@@ -33,20 +40,25 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { email: data.email } });
 
     if (!user) {
-      throw new AppError('Credenciais inválidas', 401);
+      throw new AppError("Credenciais inválidas", 401);
     }
 
-    const passwordMatches = await bcrypt.compare(data.password, user.password_hash);
+    const passwordMatches = await bcrypt.compare(
+      data.password,
+      user.password_hash,
+    );
+
     if (!passwordMatches) {
-      throw new AppError('Credenciais inválidas', 401);
+      throw new AppError("Credenciais inválidas", 401);
     }
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET não configurado');
+      throw new Error("JWT_SECRET não configurado");
     }
 
-    const expiresIn = (process.env.JWT_EXPIRES_IN || '8h') as SignOptions['expiresIn'];
+    const expiresIn = (process.env.JWT_EXPIRES_IN ||
+      "8h") as SignOptions["expiresIn"];
 
     const signOptions: SignOptions = {
       expiresIn,
@@ -65,7 +77,6 @@ export class AuthService {
     );
 
     return {
-      message: 'Login realizado com sucesso!',
       token,
       user: {
         id: user.id,

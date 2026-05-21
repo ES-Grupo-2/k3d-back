@@ -1,5 +1,5 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { ZodError } from 'zod';
+import { FastifyReply, FastifyRequest } from "fastify";
+import { ZodError } from "zod";
 
 export class AppError extends Error {
   public readonly statusCode: number;
@@ -9,16 +9,20 @@ export class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.details = details;
-    this.name = 'AppError';
+    this.name = "AppError";
 
     Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
-export function errorHandler(error: Error, request: FastifyRequest, reply: FastifyReply) {
+export function errorHandler(
+  error: Error,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   if (error instanceof ZodError) {
     return reply.status(400).send({
-      error: 'Dados inválidos',
+      error: "Dados inválidos",
       details: error.errors,
     });
   }
@@ -33,6 +37,6 @@ export function errorHandler(error: Error, request: FastifyRequest, reply: Fasti
   request.log.error(error);
 
   return reply.status(500).send({
-    error: 'Erro interno do servidor',
+    error: "Erro interno do servidor",
   });
 }
