@@ -66,7 +66,7 @@ afterEach(() => {
 });
 
 describe("auth routes", () => {
-  describe("POST /register", () => {
+  describe("POST /auth/register", () => {
     it("returns 201 and creates a user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
       userRepository.create.mockResolvedValue({
@@ -78,7 +78,7 @@ describe("auth routes", () => {
       });
 
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           name: "New User",
           email: "new@email.com",
@@ -107,7 +107,7 @@ describe("auth routes", () => {
     });
 
     it("returns 401 when authorization token is missing", async () => {
-      const response = await injectPost("/register", {
+      const response = await injectPost("/auth/register", {
         name: "New User",
         email: "new@email.com",
         password: "password123",
@@ -123,7 +123,7 @@ describe("auth routes", () => {
 
     it("returns 401 when authorization token is invalid", async () => {
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           name: "New User",
           email: "new@email.com",
@@ -142,7 +142,7 @@ describe("auth routes", () => {
 
     it("returns 403 when user role cannot register users", async () => {
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           name: "New User",
           email: "new@email.com",
@@ -161,7 +161,7 @@ describe("auth routes", () => {
 
     it("returns 400 for invalid body", async () => {
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           email: "invalid-email",
           password: "short",
@@ -178,7 +178,7 @@ describe("auth routes", () => {
 
     it("returns 400 when role is missing", async () => {
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           name: "New User",
           email: "new@email.com",
@@ -198,7 +198,7 @@ describe("auth routes", () => {
       userRepository.findUnique.mockResolvedValue(baseUser);
 
       const response = await injectPost(
-        "/register",
+        "/auth/register",
         {
           name: "Test User",
           email: "user@email.com",
@@ -229,7 +229,7 @@ describe("auth routes", () => {
     });
   });
 
-  describe("POST /login", () => {
+  describe("POST /auth/login", () => {
     it("returns 200, a JWT token, and user data for valid credentials", async () => {
       const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
@@ -237,7 +237,7 @@ describe("auth routes", () => {
         password_hash: passwordHash,
       });
 
-      const response = await injectPost("/login", {
+      const response = await injectPost("/auth/login", {
         email: "user@email.com",
         password: "password123",
       });
@@ -266,7 +266,7 @@ describe("auth routes", () => {
     it("returns 401 for unknown user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
 
-      const response = await injectPost("/login", {
+      const response = await injectPost("/auth/login", {
         email: "missing@email.com",
         password: "password123",
       });
@@ -284,7 +284,7 @@ describe("auth routes", () => {
         password_hash: passwordHash,
       });
 
-      const response = await injectPost("/login", {
+      const response = await injectPost("/auth/login", {
         email: "user@email.com",
         password: "wrong-password",
       });
@@ -296,7 +296,7 @@ describe("auth routes", () => {
     });
 
     it("returns 400 for invalid body", async () => {
-      const response = await injectPost("/login", {
+      const response = await injectPost("/auth/login", {
         email: "invalid-email",
         password: "",
       });
