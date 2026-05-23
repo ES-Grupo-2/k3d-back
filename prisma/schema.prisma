@@ -26,7 +26,7 @@ enum Status {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
+  id            Int   @id @default(autoincrement())
   name          String
   email         String   @unique
   password_hash String
@@ -76,7 +76,7 @@ model Order {
 
   // Relacionamento com Client (Opcional devido RF-16 desvincular o cliente)
   clientId       Int?     @map("client_id")
-  client         Client   @relation(fields: [clientId], references: [id])
+  client         Client?  @relation(fields: [clientId], references: [id])
 
   @@map("orders")
 }
