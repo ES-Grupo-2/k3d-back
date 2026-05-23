@@ -16,15 +16,15 @@ const envSchema = z.object({
   
   JWT_EXPIRES_IN: z.string().default('8h'),
 
-  MINIO_ENDPOINT: z.string({ required_error: 'MINIO_ENDPOINT is required.' }),
-  MINIO_PORT: z.coerce.number().default(9000),
+  MINIO_ENDPOINT: z.string().optional(),
+  MINIO_PORT: z.coerce.number().default(9000).optional(),
   MINIO_USE_SSL: z.preprocess(
     (val) => val === 'true', 
     z.boolean()
-  ).default(false),
-  MINIO_ACCESS_KEY: z.string({ required_error: 'MINIO_ACCESS_KEY is required.' }),
-  MINIO_SECRET_KEY: z.string({ required_error: 'MINIO_SECRET_KEY is required.' }),
-  MINIO_BUCKET: z.string({ required_error: 'MINIO_BUCKET is required.' }),
+  ).default(false).optional(),
+  MINIO_ACCESS_KEY: z.string().optional(),
+  MINIO_SECRET_KEY: z.string().optional(),
+  MINIO_BUCKET: z.string().optional(),
 
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -34,10 +34,22 @@ const _env = envSchema.safeParse(process.env);
 
 if (_env.success === false) {
   console.error('\n[Configuration Error] Invalid or missing environment variables:');
-  
   console.error(JSON.stringify(_env.error.format(), null, 2));
-  
   process.exit(1);
+}
+
+const minioKeys = [
+  'MINIO_ENDPOINT',
+  'MINIO_ACCESS_KEY',
+  'MINIO_SECRET_KEY',
+  'MINIO_BUCKET'
+];
+
+const missingMinio = minioKeys.filter(key => !process.env[key]);
+
+if (missingMinio.length > 0) {
+  console.warn('\n[Warning] MinIO variables are missing:', missingMinio);
+  console.warn('The server will start, but file upload features will not work.\n');
 }
 
 export const env = _env.data;
