@@ -19,10 +19,25 @@ enum Role {
   GERENTE
 }
 
-enum Status {
+enum Section {
   PENDENTE
   FAZENDO
   FINALIZADO
+}
+
+enum Status {
+  AGUARDANDO_IMPRESSAO
+  IMPRIMINDO
+  CONCLUIDO
+  PAGAMENTO_PARCIAL
+  PAGAMENTO_FINALIZADO
+}
+
+enum PaymentMethod{
+  PIX
+  CREDITO
+  DEBITO
+  DINHEIRO
 }
 
 model User {
@@ -50,7 +65,7 @@ model Client {
   id            Int      @id @default(autoincrement())
   name          String
   phone         String
-  email         String
+  email         String?
   orders        Order[]
 
   @@map("clients")
@@ -58,13 +73,19 @@ model Client {
 
 model Order {
   id             Int     @id @default(autoincrement())
-  title          String
-  status         Status  @default(PENDENTE)
+  title          String  
+  section        Section @default(PENDENTE)
+  status         Status  @default(AGUARDANDO_IMPRESSAO)
   archive        String
+  link           String? // Novo: Adicionado conforme fluxo do RF-01
+  machine        String? // Novo: Máquina(s) de impressão conforme fluxo do RF-01
+
+  //Regras financeiras
   price          Float
-  amount_paid    Float 
+  amount_paid    Float
+  cost           Float?
   quantity       Int     @default(1)
-  payment_method String? 
+  payment_method PaymentMethod? 
 
   //Filtros dos Dashboards (RF-10, 11 e 12)
   created_at     DateTime @default(now())
