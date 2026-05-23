@@ -14,8 +14,65 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  OPERACIONAL
+  GERENTE
+}
+
+enum Status {
+  PENDENTE
+  FAZENDO
+  FINALIZADO
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          Role     @default(OPERACIONAL)
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Tag {
+  id            Int     @id @default(autoincrement())
+  type          String  @unique
+  orders        Order[] 
+
+  @@map("tags")
+}
+
+model Client {
+  id            Int      @id @default(autoincrement())
+  name          String
+  phone         String
+  email         String
+  orders        Order[]
+
+  @@map("clients")
+}
+
+model Order {
+  id             Int     @id @default(autoincrement())
+  title          String
+  status         Status
+  archive        String
+  price          Float
+  amount_paid    Float 
+  quantity       Int     @default(1)
+  payment_method String? 
+
+  // Relacionamento com Tag
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [type])
+
+  // Relacionamento com Client
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id])
+
+  @@map("orders")
 }
