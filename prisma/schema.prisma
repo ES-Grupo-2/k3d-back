@@ -59,20 +59,36 @@ model Client {
 model Order {
   id             Int     @id @default(autoincrement())
   title          String
-  status         Status
+  status         Status  @default(PENDENTE)
   archive        String
   price          Float
   amount_paid    Float 
   quantity       Int     @default(1)
   payment_method String? 
 
+  //Filtros dos Dashboards (RF-10, 11 e 12)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
   // Relacionamento com Tag
   tagId String
   tag   Tag    @relation(fields: [tagId], references: [type])
 
-  // Relacionamento com Client
-  clientId Int
-  client   Client @relation(fields: [clientId], references: [id])
+  // Relacionamento com Client (Opcional devido RF-16 desvincular o cliente)
+  clientId       Int?     @map("client_id")
+  client         Client   @relation(fields: [clientId], references: [id])
 
   @@map("orders")
+}
+
+// Permite que o usuario salve configurações e recupere a última (RF-9)
+model CalculatorParameter {
+  id              Int      @id @default(autoincrement())
+  filament_price  Float    
+  kw_cost         Float    
+  depreciation    Float    
+  profit_margin   Float    
+  updated_at      DateTime @updatedAt
+
+  @@map("calculator_parameters")
 }
