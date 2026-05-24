@@ -1,17 +1,76 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          Role     @default(OPERACIONAL)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  name          String
+
+  @@map("users")
+}
+
+model Tag {
+  id     Int     @id @default(autoincrement())
+  type   String  @unique
+  orders Order[]
+
+  @@map("tags")
+}
+
+model Client {
+  id     Int     @id @default(autoincrement())
+  name   String
+  phone  String
+  email  String?
+  orders Order[]
+
+  @@map("clients")
+}
+
+model Order {
+  id             Int            @id @default(autoincrement())
+  title          String
+  section        Section        @default(PENDENTE)
+  status         Status         @default(AGUARDANDO_IMPRESSAO)
+  archive        String
+  link           String?
+  machine        String?
+  price          Float
+  amount_paid    Float
+  cost           Float?
+  quantity       Int            @default(1)
+  payment_method PaymentMethod?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  tagType        String
+  clientId       Int?           @map("client_id")
+  client         Client?        @relation(fields: [clientId], references: [id])
+  tag            Tag            @relation(fields: [tagType], references: [type], map: "orders_tagId_fkey")
+
+  @@map("orders")
+}
+
+model CalculatorParameter {
+  id             Int      @id @default(autoincrement())
+  filament_price Float
+  kw_cost        Float
+  depreciation   Float
+  profit_margin  Float
+  updated_at     DateTime @updatedAt
+
+  @@map("calculator_parameters")
 }
 
 enum Role {
@@ -33,83 +92,9 @@ enum Status {
   PAGAMENTO_FINALIZADO
 }
 
-enum PaymentMethod{
+enum PaymentMethod {
   PIX
   CREDITO
   DEBITO
   DINHEIRO
-}
-
-model User {
-  id            Int   @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password_hash String
-  role          Role     @default(OPERACIONAL)
-
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  @@map("users")
-}
-
-model Tag {
-  id            Int     @id @default(autoincrement())
-  type          String  @unique
-  orders        Order[] 
-
-  @@map("tags")
-}
-
-model Client {
-  id            Int      @id @default(autoincrement())
-  name          String
-  phone         String
-  email         String?
-  orders        Order[]
-
-  @@map("clients")
-}
-
-model Order {
-  id             Int     @id @default(autoincrement())
-  title          String  
-  section        Section @default(PENDENTE)
-  status         Status  @default(AGUARDANDO_IMPRESSAO)
-  archive        String
-  link           String? // Novo: Adicionado conforme fluxo do RF-01
-  machine        String? // Novo: Máquina(s) de impressão conforme fluxo do RF-01
-
-  //Regras financeiras
-  price          Float
-  amount_paid    Float
-  cost           Float?
-  quantity       Int     @default(1)
-  payment_method PaymentMethod? 
-
-  //Filtros dos Dashboards (RF-10, 11 e 12)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-
-  // Relacionamento com Tag
-  tagId String
-  tag   Tag    @relation(fields: [tagId], references: [type])
-
-  // Relacionamento com Client (Opcional devido RF-16 desvincular o cliente)
-  clientId       Int?     @map("client_id")
-  client         Client?  @relation(fields: [clientId], references: [id])
-
-  @@map("orders")
-}
-
-// Permite que o usuario salve configurações e recupere a última (RF-9)
-model CalculatorParameter {
-  id              Int      @id @default(autoincrement())
-  filament_price  Float    
-  kw_cost         Float    
-  depreciation    Float    
-  profit_margin   Float    
-  updated_at      DateTime @updatedAt
-
-  @@map("calculator_parameters")
 }
