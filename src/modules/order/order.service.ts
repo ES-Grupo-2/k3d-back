@@ -1,14 +1,13 @@
-import { OrderStatus } from '../../generated/prisma';
 import { prisma } from "../../lib/clientPrisma";
 
 export class OrderService{
 
     async createOrder(data: any) {
-  const newOrder = await prisma.order.create({
+  const newOrder = await prisma.orders.create({
     data: {
       title: data.title,
       tagType: data.tagType,
-      archive3d: data.archive3d,
+      archive: data.archive,
       price: data.price,
       amount_paid: data.amount_paid,
       quantity: data.quantity,
@@ -16,19 +15,19 @@ export class OrderService{
       cost: data.cost,
       link: data.link,
       machine: data.machine,
-      userId: data.userId,
-      clientId: data.clientId,
-
-      section: data.section || 'PENDING', 
-      status: data.status || 'WAITING_PRINTING'
+      user_id: data.user_id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      section: data.section || 'PENDENTE', 
+      status: data.status || 'AGUARDANDO_IMPRESSAO'
     }
   });
 
   return newOrder;
 }
 
-async moveOrder(id: number, destinationSection: 'PENDING' | 'DOING' | 'DONE') {
-    const currentOrder = await prisma.order.findUnique({
+async moveOrder(id: number, destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALIZADO') {
+    const currentOrder = await prisma.orders.findUnique({
       where: { id: id }
     });
 
@@ -36,7 +35,7 @@ async moveOrder(id: number, destinationSection: 'PENDING' | 'DOING' | 'DONE') {
       throw new Error('Pedido não encontrado.');
     }
 
-    const movedOrder = await prisma.order.update({
+    const movedOrder = await prisma.orders.update({
       where: { id: id },
       data: { section: destinationSection }
     });
@@ -44,5 +43,52 @@ async moveOrder(id: number, destinationSection: 'PENDING' | 'DOING' | 'DONE') {
     return movedOrder;
   }
 
+  async deleteOrder(id: number) {
+    const orderExists = await prisma.orders.findUnique({
+      where: { id: id }
+    });
 
+    if (!orderExists) {
+      throw new Error('Pedido não encontrado.');
+    }
+
+    await prisma.orders.delete({
+      where: { id: id }
+    });
+
+    return { message: 'Pedido removido com sucesso do Kanban.' };
+  }
+
+  async updateOrder(id: number, data: any) {
+  const currentOrder = await prisma.orders.findUnique({
+    where: { id: id }
+  });
+
+  if (!currentOrder) {
+    throw new Error('Pedido não encontrado.');
+  }
+
+  
+
+  const updatedOrder = await prisma.orders.update({
+    where: { id: id },
+    data: {
+      title: data.title,
+      tagType: data.tagType,
+      archive: data.archive,
+      client_id: data.client_id,
+      price: data.price,
+      amount_paid: data.amount_paid,
+      quantity: data.quantity,
+      payment_method: data.payment_method,
+      cost: data.cost,
+      link: data.link,
+      machine: data.machine,
+      status: data.status,
+      section: data.section,
+      updated_at: new Date()}
+  });
+
+  return updatedOrder;
+}
 }
