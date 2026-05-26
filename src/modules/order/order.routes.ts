@@ -28,4 +28,10 @@ export async function orderRoutes(app: FastifyInstance) {
         { preHandler: [verifyJWT] },
         orderController.delete
     );
+
+    app.get(
+        "/orders",
+        { preHandler: [verifyJWT] },
+        orderController.get
+    );
 }

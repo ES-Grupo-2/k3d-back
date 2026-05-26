@@ -20,7 +20,7 @@ export class OrderController {
         const { id } = request.params as { id: string };
         const orderId = Number(id);
 
-        const { destinationSection } = request.body as { destinationSection: 'PENDING' | 'DOING' | 'DONE' };
+        const { destinationSection } = request.body as { destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALIZADO' };
 
         if (isNaN(orderId)) {
             return reply.status(400).send({ error: 'ID do pedido inválido.' });
@@ -62,6 +62,16 @@ export class OrderController {
 
         const result = await orderService.deleteOrder(orderId);
         return reply.status(200).send(result);
+        } catch (error: any) {
+        return reply.status(400).send({ error: error.message });
+        }
+    }
+
+    async get(request: FastifyRequest, reply: FastifyReply) {
+        try {
+        const { page, limit, ...filters } = request.query as any;
+        const orders = await orderService.getOrders(Number(page) || 1, Number(limit) || 10, filters);
+        return reply.status(200).send(orders);
         } catch (error: any) {
         return reply.status(400).send({ error: error.message });
         }
