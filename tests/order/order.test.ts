@@ -34,7 +34,7 @@ const baseOrder = {
   id: 1,
   title: "Impressão Suporte Action Figure",
   section: "PENDENTE",
-  status: "AGUARDANDO_IMPRESSAO",
+  status: "PAGO",
   archive: "suporte_iron_man.gcode",
   link: "http://link-do-drive.com",
   machine: "Ender 3 S1",

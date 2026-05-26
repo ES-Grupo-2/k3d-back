@@ -20,7 +20,7 @@ export class OrderService{
       created_at: new Date(),
       updated_at: new Date(),
       section: data.section || 'PENDENTE', 
-      status: data.status || 'AGUARDANDO_IMPRESSAO'
+      status: data.status || 'NAOPAGO'
     }
   });
 
