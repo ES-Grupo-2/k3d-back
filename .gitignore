@@ -141,3 +141,24 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+
+# Dependency
+node_modules/
+
+# Build
+dist/
+
+# Prisma
+prisma/dev.db
+
+# Edit
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+
+
+
+/src/generated/prisma
