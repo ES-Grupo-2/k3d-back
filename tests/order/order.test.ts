@@ -76,7 +76,6 @@ async function injectRequest(method: "GET" | "PUT" | "PATCH" | "DELETE", url: st
       url,
       payload: payload ? JSON.stringify(payload) : undefined,
       headers: {
-        // O segredo: SÓ adiciona o content-type se houver um payload de verdade
         ...(payload ? { "content-type": "application/json" } : {}),
         ...(token ? { authorization: token } : {}),
       },
@@ -94,6 +93,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+
+// TESTES GERAIS 
 describe("order routes (Kanban)", () => {
   
   describe("PATCH /orders/:id/move", () => {
@@ -123,7 +124,6 @@ describe("order routes (Kanban)", () => {
     it("returns 400 when business rules block the movement", async () => {
       orderRepository.findUnique.mockResolvedValue(baseOrder);
       
-      // Simulamos que o Service disparou um erro de validação de status
       vi.spyOn(orderRepository, "update").mockRejectedValueOnce(new Error("Não é possível mover o pedido"));
 
       const response = await injectRequest(
@@ -164,27 +164,23 @@ describe("order routes (Kanban)", () => {
 
   describe("DELETE /orders/:id", () => {
     it("returns 200 when order is successfully deleted", async () => {
-      // Força o findUnique a retornar o pedido mockado não importa o argumento
       orderRepository.findUnique.mockResolvedValue(baseOrder);
       
-      // Força o delete a resolver com sucesso não importa o objeto de filtro recebido
       orderRepository.delete.mockResolvedValue(baseOrder);
 
       const response = await injectRequest(
         "DELETE",
-        "/orders/1", // Passando o ID 1 na URL
+        "/orders/1", 
         undefined,
-        authHeaderToken("GERENTE") // Certifique-se de que GERENTE tem permissão de deleção no seu sistema
+        authHeaderToken("GERENTE") 
       );
 
-      // Se der 500, o console configurado no setErrorHandler vai cuspir o motivo real
       expect(response.statusCode).toBe(200);
     });
   });
 
   describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
     it("returns 200, paginated orders and correct metadata structure", async () => {
-      // No método dinâmico, simulamos a resposta simultânea do findMany e count da transação
       orderRepository.findMany.mockResolvedValue([baseOrder]);
       orderRepository.count.mockResolvedValue(1);
 
@@ -232,3 +228,133 @@ describe("order routes (Kanban)", () => {
     });
   });
 });
+
+//TESTES DE UPDATE COM MÚLTIPLOS TIPOS DE CAMPOS
+describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
+    it("returns 200 and correctly parses multiple fields of different types simultaneously", async () => {
+      // 1. O mock do banco simula o retorno com todos os campos já atualizados
+      orderRepository.findUnique.mockResolvedValue(baseOrder);
+      orderRepository.update.mockResolvedValue({
+        ...baseOrder,
+        title: "Novo Nome do Arquivo GCODE",
+        quantity: 5,
+        price: 150.50,
+      });
+
+
+      const payloadComMultiplosTipos = {
+        title: "Novo Nome do Arquivo GCODE",
+        quantity: 5,
+        price: 150.50,
+      };
+
+      const response = await injectRequest(
+        "PUT",
+        "/orders/1",
+        payloadComMultiplosTipos, // Enviando o payload misto
+        authHeaderToken("GERENTE")
+      );
+
+      // 3. Validações
+      expect(response.statusCode).toBe(200);
+      
+      const body = response.json();
+      expect(body).toMatchObject({
+        title: "Novo Nome do Arquivo GCODE",
+        quantity: 5,  
+        price: 150.50
+      });
+
+      // Garante que o Prisma recebeu os tipos de dados já convertidos corretamente
+      expect(orderRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            title: "Novo Nome do Arquivo GCODE",
+            quantity: 5,   
+            price: 150.50,
+          }),
+        })
+      );
+    });
+  });
+
+
+  describe("GET /orders (Filtros Dinâmicos e Tipagem)", () => {
+    
+    it("converte strings da URL para os tipos corretos (Int, Float, Enum) ao filtrar", async () => {
+      // 1. Configura os mocks para responderem com sucesso
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      // 2. Simula o Frontend buscando na URL:
+      // ?quantity=2 (Int) & price=85.50 (Float) & section=PENDENTE (Enum)
+      const response = await injectRequest(
+        "GET",
+        "/orders?quantity=2&price=85.50&section=PENDENTE",
+        undefined, // GET não tem payload/body
+        authHeaderToken("OPERACIONAL")
+      );
+
+      // 3. Valida se a rota respondeu 200 OK
+      expect(response.statusCode).toBe(200);
+
+      // 4. A PROVA REAL: Verifica se o utilitário converteu as strings da URL em números puros
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            quantity: 2,       // "2" virou o número inteiro 2
+            price: 85.50,      // "85.50" virou o número float 85.5
+            section: "PENDENTE" // Manteve o Enum correto
+          }
+        })
+      );
+    });
+
+    it("ignora campos enviados na URL que não existem no banco de dados", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      // Simula alguém tentando injetar um filtro que não existe na tabela 'orders'
+      const response = await injectRequest(
+        "GET",
+        "/orders?campo_fantasma=teste&outro_invalido=123",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(200);
+
+      // Garante que o objeto 'where' enviado ao Prisma veio vazio {}, 
+      // provando que o utilitário limpou os campos inválidos
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {}
+        })
+      );
+    });
+
+    it("ignora filtros que venham com valores vazios ou nulos na URL", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      // Simula a URL quando o usuário limpa os campos de busca na tela
+      const response = await injectRequest(
+        "GET",
+        "/orders?title=&section=&machine=",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(200);
+
+      // Garante que strings vazias não foram mandadas como filtro para o Prisma
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {}
+        })
+      );
+    });
+
+  });
+

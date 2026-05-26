@@ -147,7 +147,7 @@ async moveOrder(id: number, destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALI
         Int:     () => { compiledWhere[key] = Number(value); },
         Float:   () => { compiledWhere[key] = Number(value); },
         Boolean: () => { compiledWhere[key] = value === 'true' || value === true; },
-        Enum:    () => { compiledWhere[key] = value; }
+        enum:    () => { compiledWhere[key] = value; }
       };
 
       const execute = strategy[fieldInfo.type] || strategy[fieldInfo.kind];
