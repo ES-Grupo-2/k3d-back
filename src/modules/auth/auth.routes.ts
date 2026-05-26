@@ -4,13 +4,16 @@ import { verifyJWT } from "../../middlewares/auth";
 import { checkRole } from "../../middlewares/rbac";
 
 export async function authRoutes(app: FastifyInstance) {
+
   app.post(
-    "/auth/register",
+    "/register",
     {
       preHandler: [verifyJWT, checkRole("GERENTE")],
     },
     AuthController.registerHandler,
   );
 
-  app.post("/auth/login", AuthController.loginHandler);
+  app.post(
+    "/login",
+     AuthController.loginHandler);
 }
