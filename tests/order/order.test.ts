@@ -64,12 +64,12 @@ async function injectRequest(method: "GET" | "PUT" | "PATCH" | "DELETE", url: st
 
   app.setErrorHandler((error, request, reply) => {
     console.error("====== O BUG REAL ESTÁ AQUI ======");
-    console.error(error); 
+    console.error(error);
     console.error("==================================");
     const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
     reply.status(500).send({ error: errorMessage });
   });
-  
+
   try {
     return await app.inject({
       method,
@@ -96,7 +96,7 @@ afterEach(() => {
 
 // TESTES GERAIS 
 describe("order routes (Kanban)", () => {
-  
+
   describe("PATCH /orders/:id/move", () => {
     it("returns 200 and moves the order on Kanban successfully", async () => {
       // Simulamos que o pedido atual está PENDENTE e AGUARDANDO_IMPRESSAO
@@ -113,7 +113,7 @@ describe("order routes (Kanban)", () => {
         authHeaderToken("OPERACIONAL")
       );
 
-        expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(200);
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject({
         id: 1,
@@ -123,7 +123,7 @@ describe("order routes (Kanban)", () => {
 
     it("returns 400 when business rules block the movement", async () => {
       orderRepository.findUnique.mockResolvedValue(baseOrder);
-      
+
       vi.spyOn(orderRepository, "update").mockRejectedValueOnce(new Error("Não é possível mover o pedido"));
 
       const response = await injectRequest(
@@ -165,14 +165,14 @@ describe("order routes (Kanban)", () => {
   describe("DELETE /orders/:id", () => {
     it("returns 200 when order is successfully deleted", async () => {
       orderRepository.findUnique.mockResolvedValue(baseOrder);
-      
+
       orderRepository.delete.mockResolvedValue(baseOrder);
 
       const response = await injectRequest(
         "DELETE",
-        "/orders/1", 
+        "/orders/1",
         undefined,
-        authHeaderToken("GERENTE") 
+        authHeaderToken("GERENTE")
       );
 
       expect(response.statusCode).toBe(200);
@@ -186,7 +186,7 @@ describe("order routes (Kanban)", () => {
 
       const response = await injectRequest(
         "GET",
-        "/orders?page=1&limit=10&section=PENDENTE",
+        "/orders?page=1&limit=10&section=PENDENTE", // Todos os campos existem no Zod Schema
         undefined,
         authHeaderToken("OPERACIONAL")
       );
@@ -206,31 +206,11 @@ describe("order routes (Kanban)", () => {
       expect(body.data[0].id).toBe(1);
     });
 
-    it("ignores properties that do not exist in database schema", async () => {
-      orderRepository.findMany.mockResolvedValue([baseOrder]);
-      orderRepository.count.mockResolvedValue(1);
-
-      // Passando 'campo_fantasma' na query string
-      const response = await injectRequest(
-        "GET",
-        "/orders?campo_fantasma=teste",
-        undefined,
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(200);
-      // Garante que o findMany foi chamado sem aplicar o filtro do campo fantasma
-      expect(orderRepository.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {}
-        })
-      );
-    });
+  
   });
-});
 
-//TESTES DE UPDATE COM MÚLTIPLOS TIPOS DE CAMPOS
-describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
+  //TESTES DE UPDATE COM MÚLTIPLOS TIPOS DE CAMPOS
+  describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
     it("returns 200 and correctly parses multiple fields of different types simultaneously", async () => {
       // 1. O mock do banco simula o retorno com todos os campos já atualizados
       orderRepository.findUnique.mockResolvedValue(baseOrder);
@@ -257,11 +237,11 @@ describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
 
       // 3. Validações
       expect(response.statusCode).toBe(200);
-      
+
       const body = response.json();
       expect(body).toMatchObject({
         title: "Novo Nome do Arquivo GCODE",
-        quantity: 5,  
+        quantity: 5,
         price: 150.50
       });
 
@@ -271,65 +251,80 @@ describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
           where: { id: 1 },
           data: expect.objectContaining({
             title: "Novo Nome do Arquivo GCODE",
-            quantity: 5,   
+            quantity: 5,
             price: 150.50,
           }),
         })
       );
     });
   });
-
-
-  describe("GET /orders (Filtros Dinâmicos e Tipagem)", () => {
+describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
     
-    it("converte strings da URL para os tipos corretos (Int, Float, Enum) ao filtrar", async () => {
-      // 1. Configura os mocks para responderem com sucesso
+    it("returns 200, paginated orders and correct metadata structure", async () => {
       orderRepository.findMany.mockResolvedValue([baseOrder]);
       orderRepository.count.mockResolvedValue(1);
 
-      // 2. Simula o Frontend buscando na URL:
-      // ?quantity=2 (Int) & price=85.50 (Float) & section=PENDENTE (Enum)
       const response = await injectRequest(
         "GET",
-        "/orders?quantity=2&price=85.50&section=PENDENTE",
-        undefined, // GET não tem payload/body
+        "/orders?page=1&limit=10&section=PENDENTE",
+        undefined,
         authHeaderToken("OPERACIONAL")
       );
 
-      // 3. Valida se a rota respondeu 200 OK
-      expect(response.statusCode).toBe(200);
+      const body = response.json();
 
-      // 4. A PROVA REAL: Verifica se o utilitário converteu as strings da URL em números puros
+      expect(response.statusCode).toBe(200);
+      expect(body).toHaveProperty("data");
+      expect(body).toHaveProperty("meta");
+      expect(body.meta).toMatchObject({
+        totalItems: 1,
+        itemCount: 1,
+        itemsPerPage: 10,
+        currentPage: 1,
+        totalPages: 1,
+      });
+      expect(body.data[0].id).toBe(1);
+    });
+
+    it("ignores properties that do not exist in database schema (campo_fantasma)", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      const response = await injectRequest(
+        "GET",
+        "/orders?campo_fantasma=teste",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(200);
+      
       expect(orderRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
-            quantity: 2,       // "2" virou o número inteiro 2
-            price: 85.50,      // "85.50" virou o número float 85.5
-            section: "PENDENTE" // Manteve o Enum correto
-          }
+          where: {}
         })
       );
     });
 
-    it("ignora campos enviados na URL que não existem no banco de dados", async () => {
+    it("converte strings da URL para os tipos corretos (Int, Float) ao filtrar", async () => {
       orderRepository.findMany.mockResolvedValue([baseOrder]);
       orderRepository.count.mockResolvedValue(1);
 
-      // Simula alguém tentando injetar um filtro que não existe na tabela 'orders'
       const response = await injectRequest(
         "GET",
-        "/orders?campo_fantasma=teste&outro_invalido=123",
+        "/orders?quantity=2&price=85.50",
         undefined,
         authHeaderToken("OPERACIONAL")
       );
 
       expect(response.statusCode).toBe(200);
 
-      // Garante que o objeto 'where' enviado ao Prisma veio vazio {}, 
-      // provando que o utilitário limpou os campos inválidos
       expect(orderRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {}
+          where: {
+            quantity: 2,
+            price: 85.50
+          }
         })
       );
     });
@@ -338,7 +333,6 @@ describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
       orderRepository.findMany.mockResolvedValue([baseOrder]);
       orderRepository.count.mockResolvedValue(1);
 
-      // Simula a URL quando o usuário limpa os campos de busca na tela
       const response = await injectRequest(
         "GET",
         "/orders?title=&section=&machine=",
@@ -348,7 +342,6 @@ describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
 
       expect(response.statusCode).toBe(200);
 
-      // Garante que strings vazias não foram mandadas como filtro para o Prisma
       expect(orderRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {}
@@ -356,5 +349,4 @@ describe("PUT /orders/:id (Múltiplos Tipos de Campos)", () => {
       );
     });
 
-  });
-
+  });   }); 
