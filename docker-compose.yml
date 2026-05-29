@@ -1,3 +1,5 @@
+# rodar - docker compose up -d
+# acessar - http://localhost:9001 com as credenciais do arquivo .env
 services:
   minio:
     image: minio/minio:latest
