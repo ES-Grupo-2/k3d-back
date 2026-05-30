@@ -1,7 +1,21 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../../src/app";
+import type { Order } from "../../src/generated/prisma";
 import { prisma } from "../../src/lib/clientPrisma";
+
+type KanbanTask = Order & {
+  tag: {
+    id: number;
+    type: string;
+  };
+  client: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string | null;
+  };
+};
 
 vi.mock("../../src/lib/clientPrisma", () => ({
   prisma: {
@@ -61,7 +75,7 @@ describe("kanban routes", () => {
     it("returns 200 and the tasks for a valid section", async () => {
       const updatedAt = new Date("2026-05-29T10:00:00.000Z");
       const createdAt = new Date("2026-05-28T10:00:00.000Z");
-      const tasks = [
+      const tasks: KanbanTask[] = [
         {
           id: 1,
           title: "Chaveiro do Luffy",
