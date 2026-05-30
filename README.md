@@ -8,13 +8,13 @@ npm install
 cp .env.example .env
 # Edite o .env se necessário
 
-# 3. Criar tabelas 
-npm run db:migrate
+# 3. Atualizar as tabelas
+npm run db:pull
 
-# 4. Popular com dados de demonstração
+# 4. Popular com dados de demonstração (opcional devido a conexão direta com supabase)
 npm run db:seed
 
-# 6. Iniciar o servidor
+# 5. Iniciar o servidor
 npm run dev
 ```
 
