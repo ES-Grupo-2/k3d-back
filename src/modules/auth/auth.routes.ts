@@ -8,7 +8,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post(
     "/register",
     {
-      preHandler: [verifyJWT, checkRole("GERENTE")],
+      preHandler: [verifyJWT, checkRole(["GERENTE"])],
     },
     AuthController.registerHandler,
   );
