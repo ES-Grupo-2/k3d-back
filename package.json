@@ -12,7 +12,8 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "db:pull": "prisma db pull"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -33,6 +34,6 @@
     "prisma": "^5.22.0",
     "tsx": "^4.15.0",
     "typescript": "^5.4.5",
-    "vitest": "^0.34.6"
+    "vitest": "^4.1.7"
   }
 }
