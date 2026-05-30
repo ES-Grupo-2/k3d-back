@@ -13,6 +13,8 @@ export const createOrderSchema = z.object({
   cost: z.coerce.number().nonnegative("O custo não pode ser negativo").optional(),
   payment_method: z.string().trim().optional(),
   client_id: z.coerce.number().int().positive().optional(),
+  section: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"]).optional(),
+  status: z.string().trim().optional(),
 });
 
 export const updateOrderSchema = createOrderSchema.partial();
