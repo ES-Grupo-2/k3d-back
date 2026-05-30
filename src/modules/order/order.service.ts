@@ -1,9 +1,10 @@
 import { Prisma } from "../../generated/prisma";
 import { prisma } from "../../lib/clientPrisma";
+import {GetOrderQueryInput, CreateOrderInput, UpdateOrderInput, MoveOrderInput} from "./order.types";
 
 export class OrderService{
 
-    async createOrder(data: any) {
+    async createOrder(data: CreateOrderInput) {
   const newOrder = await prisma.orders.create({
     data: {
       title: data.title,
@@ -16,7 +17,7 @@ export class OrderService{
       cost: data.cost,
       link: data.link,
       machine: data.machine,
-      user_id: data.user_id,
+      client_id: data.client_id,
       created_at: new Date(),
       updated_at: new Date(),
       section: data.section || 'PENDENTE', 
@@ -27,8 +28,8 @@ export class OrderService{
   return newOrder;
 }
 
-async moveOrder(id: number, destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALIZADO') {
-    const currentOrder = await prisma.orders.findUnique({
+async moveOrder(id: number, destinationSection: MoveOrderInput["destinationSection"]) {
+      const currentOrder = await prisma.orders.findUnique({
       where: { id: id }
     });
 
@@ -60,8 +61,8 @@ async moveOrder(id: number, destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALI
     return { message: 'Pedido removido com sucesso do Kanban.' };
   }
 
-  async updateOrder(id: number, data: any) {
-  const currentOrder = await prisma.orders.findUnique({
+async updateOrder(id: number, data: UpdateOrderInput) {
+    const currentOrder = await prisma.orders.findUnique({
     where: { id: id }
   });
 
@@ -94,8 +95,11 @@ async moveOrder(id: number, destinationSection: 'PENDENTE' | 'FAZENDO' | 'FINALI
 }
   
 
-  async getOrders(page: number = 1, limit: number = 10, filters: Record<string, any> = {}) {
-    const currentPage = Math.max(1, page);
+async getOrders(
+  page: number = 1, 
+  limit: number = 10, 
+  filters: Omit<GetOrderQueryInput, "page" | "limit"> = {}
+){    const currentPage = Math.max(1, page);
     const currentLimit = Math.max(1, limit);
     const skip = (currentPage - 1) * currentLimit;
 
