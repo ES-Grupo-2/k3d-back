@@ -1,5 +1,6 @@
 import fastify, { FastifyServerOptions } from "fastify";
 import { errorHandler } from "./utils/errors";
+import { orderRoutes } from "./modules/order/order.routes";
 import { authRoutes }       from "./modules/auth/auth.routes";
 // import { kanbanRoutes }     from "./modules/kanban/kanban.routes";
 import { clientsRoutes }    from "./modules/client/clients.routes"; 
@@ -13,7 +14,7 @@ export function buildApp(options: FastifyServerOptions = { logger: true }) {
 
   app.setErrorHandler(errorHandler);
   app.register(authRoutes);
-
+  app.register(orderRoutes);
   app.register(authRoutes,       { prefix: "/auth" });
   // app.register(kanbanRoutes,     { prefix: "/kanban" });
   app.register(clientsRoutes,    { prefix: "/clients" });
