@@ -2,13 +2,11 @@ import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../../src/app";
 
-// 1. Definição única das variáveis içadas (hoisted) pelo Vitest
 const { mockS3Send, mockDone } = vi.hoisted(() => ({
     mockS3Send: vi.fn(),
     mockDone: vi.fn(),
 }));
 
-// 2. Mocks dos módulos externos usando as variáveis acima
 vi.mock("@aws-sdk/lib-storage", () => {
     class MockUpload {
         done = mockDone;
@@ -27,7 +25,6 @@ vi.mock("@aws-sdk/client-s3", () => ({
     DeleteObjectCommand: class { },
 }));
 
-// 3. Função auxiliar para gerar Tokens de Teste
 function authToken(role = "GERENTE") {
     return jwt.sign(
         { email: "manager@email.com", role },
@@ -36,7 +33,6 @@ function authToken(role = "GERENTE") {
     );
 }
 
-// 4. Helper para requisições POST (Multipart / Upload)
 async function injectMultipartFile(url: string, token?: string) {
     const app = buildApp({ logger: false });
     const boundary = "----VitestBoundary12345";
@@ -65,7 +61,6 @@ async function injectMultipartFile(url: string, token?: string) {
     }
 }
 
-// 5. Helper para requisições normais (GET e DELETE)
 async function injectStandardRequest(method: "GET" | "DELETE", url: string, token?: string) {
     const app = buildApp({ logger: false });
     try {
