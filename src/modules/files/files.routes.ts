@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { verifyJWT } from "../../middlewares/auth";
-import { MinioController } from "./minio.controller";
+import { MinioController } from "./files.controller";
 
 const minioController = new MinioController();
 

@@ -1,7 +1,7 @@
 import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getMinioClient } from "../../lib/minIo";
-import { FastifyUploadFile, UploadResponse } from "./minio.types";
+import { FastifyUploadFile, UploadResponse } from "./files.types";
 
 export class MinioService {
     private bucketName = process.env.MINIO_BUCKET || "k3d-files";

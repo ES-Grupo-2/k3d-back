@@ -88,11 +88,11 @@ afterEach(() => {
 describe("minio routes", () => {
 
 
-    describe("POST /minio", () => {
+    describe("POST /files", () => {
         it("returns 201 and the file metadata when upload succeeds", async () => {
             mockDone.mockResolvedValue({ Bucket: "k3d-files", Key: "foto-teste.png" });
 
-            const response = await injectMultipartFile("/minio", authToken("GERENTE"));
+            const response = await injectMultipartFile("/files", authToken("GERENTE"));
 
             expect(response.statusCode).toBe(201);
             expect(response.json()).toMatchObject({
@@ -102,21 +102,21 @@ describe("minio routes", () => {
         });
 
         it("returns 401 when token is missing", async () => {
-            const response = await injectMultipartFile("/minio");
+            const response = await injectMultipartFile("/files");
             expect(response.statusCode).toBe(401);
         });
 
         it("returns 500 when upload driver fails", async () => {
             mockDone.mockRejectedValue(new Error("Erro do S3"));
 
-            const response = await injectMultipartFile("/minio", authToken("GERENTE"));
+            const response = await injectMultipartFile("/files", authToken("GERENTE"));
 
             expect(response.statusCode).toBe(500);
             expect(response.json()).toEqual({ error: "Erro interno ao processar o upload." });
         });
     });
 
-    describe("GET /minio/:fileName", () => {
+    describe("GET /files/:fileName", () => {
         it("returns 200 and the file stream when file exists", async () => {
             mockS3Send.mockResolvedValue({
                 Body: "stream_de_dados_da_imagem_fake",
@@ -125,7 +125,7 @@ describe("minio routes", () => {
 
             const response = await injectStandardRequest(
                 "GET",
-                "/minio/12345-foto.png",
+                "/files/12345-foto.png",
                 authToken("OPERACIONAL")
             );
 
@@ -138,20 +138,20 @@ describe("minio routes", () => {
         it("returns 404 when file does not exist in MinIO", async () => {
             mockS3Send.mockRejectedValue(new Error("NoSuchKey"));
 
-            const response = await injectStandardRequest("GET", "/minio/arquivo-fantasma.png", authToken("OPERACIONAL"));
+            const response = await injectStandardRequest("GET", "/files/arquivo-fantasma.png", authToken("OPERACIONAL"));
 
             expect(response.statusCode).toBe(404);
             expect(response.json()).toEqual({ error: "Arquivo não encontrado." });
         });
     });
 
-    describe("DELETE /minio/:fileName", () => {
+    describe("DELETE /files/:fileName", () => {
         it("returns 200 when file is successfully deleted", async () => {
             mockS3Send.mockResolvedValue({});
 
             const response = await injectStandardRequest(
                 "DELETE",
-                "/minio/12345-foto.png",
+                "/files/12345-foto.png",
                 authToken("GERENTE")
             );
 
@@ -165,7 +165,7 @@ describe("minio routes", () => {
 
             const response = await injectStandardRequest(
                 "DELETE",
-                "/minio/12345-foto.png",
+                "/files/12345-foto.png",
                 authToken("OPERACIONAL")
             );
 

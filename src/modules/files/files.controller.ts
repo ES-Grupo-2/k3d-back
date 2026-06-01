@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Readable } from "stream";
-import { MinioService } from "./minio.service";
-import { FastifyUploadFile } from "./minio.types";
+import { MinioService } from "./files.service";
+import { FastifyUploadFile } from "./files.types";
 
 const minioService = new MinioService();
 
