@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+process.env.JWT_SECRET = "test-secret";
+process.env.JWT_EXPIRES_IN = "8h";
+
 import { buildApp } from "../../src/app";
 import { prisma } from "../../src/lib/clientPrisma";
 
@@ -26,21 +30,26 @@ const baseUser = {
   updated_at: new Date(),
 };
 
-function authToken(role = "GERENTE") {
+function authToken(role: "GERENTE" | "OPERACIONAL" = "GERENTE") {
   return jwt.sign(
     {
+      sub: "99",
       email: "manager@email.com",
       role,
     },
-    "test-secret",
+    process.env.JWT_SECRET!,
     {
-      subject: "99",
-      expiresIn: "8h",
+      expiresIn: process.env.JWT_EXPIRES_IN,
     },
   );
 }
 
-async function injectPost(url: string, payload: unknown, token?: string) {
+async function injectPost(
+  url: string,
+  payload: unknown,
+  token?: string,
+) {
+
   const app = buildApp({ logger: false });
 
   try {
@@ -48,17 +57,24 @@ async function injectPost(url: string, payload: unknown, token?: string) {
       method: "POST",
       url,
       payload,
-      headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      headers: token
+        ? {
+            authorization: `Bearer ${token}`,
+          }
+        : undefined,
     });
+
   } finally {
     await app.close();
   }
 }
 
 beforeEach(() => {
-  process.env.JWT_SECRET = "test-secret";
-  process.env.JWT_EXPIRES_IN = "8h";
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterEach(() => {
