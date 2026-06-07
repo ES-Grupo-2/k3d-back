@@ -43,7 +43,7 @@ model Order {
   id             Int      @id @default(autoincrement())
   title          String
   section        Section  @default(PENDENTE)
-  status         String   @default("AGUARDANDO_IMPRESSAO")
+  status         String   @default("NAO_PAGO")
   archive        String
   link           String?
   machine        String?
