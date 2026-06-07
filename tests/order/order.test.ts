@@ -1,16 +1,15 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildApp } from "../../src/app"; // ajuste o caminho do seu app
-import { prisma } from "../../src/lib/clientPrisma"; // ajuste o caminho do seu cliente prisma
-import { orders } from "../../src/generated/prisma";
+import { buildApp } from "../../src/app";
+import { prisma } from "../../src/lib/clientPrisma";
+import { Order } from "../../src/generated/prisma"; // <-- PascalCase
 
-// 1. Mockamos o Prisma Client isolando a tabela 'orders'
 vi.mock("../../src/lib/clientPrisma", () => {
   const actualPrisma = vi.importActual("../../src/lib/clientPrisma");
   return {
     ...actualPrisma,
     prisma: {
-      orders: {
+      order: {          // <-- "order" (singular, lowercase) é o nome da delegate no Prisma Client
         findUnique: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
@@ -18,7 +17,6 @@ vi.mock("../../src/lib/clientPrisma", () => {
         findMany: vi.fn(),
         count: vi.fn(),
       },
-      // Garante que se o service usar transaction no move, ele execute os mocks corretamente
       $transaction: vi.fn(async (promises) => {
         if (Array.isArray(promises)) return Promise.all(promises);
         if (typeof promises === "function") return promises(prisma);
@@ -27,14 +25,13 @@ vi.mock("../../src/lib/clientPrisma", () => {
   };
 });
 
-const orderRepository = vi.mocked(prisma.orders);
+const orderRepository = vi.mocked(prisma.order); // <-- "order" aqui também
 
-// Objeto base para reaproveitarmos nos retornos simulados do banco
 const baseOrder = {
   id: 1,
   title: "Impressão Suporte Action Figure",
   section: "PENDENTE",
-  status: "PAGO",
+  status: "NAO_PAGO",
   archive: "suporte_iron_man.gcode",
   link: "http://link-do-drive.com",
   machine: "Ender 3 S1",
@@ -46,8 +43,8 @@ const baseOrder = {
   created_at: new Date(),
   updated_at: new Date(),
   tagType: "PETG",
-  client_id: 4,
-} as unknown as orders;
+  clientId: 4,           // <-- camelCase, igual ao modelo Prisma gerado
+} as unknown as Order;
 
 // Helper para gerar o token JWT com o cargo que precisarmos testar
 function authHeaderToken(role = "OPERACIONAL") {
