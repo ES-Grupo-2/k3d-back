@@ -15,8 +15,6 @@ export class OrderService{
       quantity: data.quantity,
       payment_method: data.payment_method,
       cost: data.cost,
-      link: data.link,
-      machine: data.machine,
       clientId: data.client_id,
       created_at: new Date(),
       updated_at: new Date(),
@@ -84,8 +82,6 @@ async updateOrder(id: number, data: UpdateOrderInput) {
       quantity: data.quantity,
       payment_method: data.payment_method,
       cost: data.cost,
-      link: data.link,
-      machine: data.machine,
       status: data.status,
       section: data.section,
       updated_at: new Date()}

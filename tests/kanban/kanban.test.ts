@@ -82,8 +82,6 @@ describe("kanban routes", () => {
           section: "PENDENTE",
           status: "AGUARDANDO_IMPRESSAO",
           archive: "linkdoarquivo.sdfsha",
-          link: null,
-          machine: null,
           price: 8,
           amount_paid: 8,
           cost: null,

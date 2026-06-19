@@ -7,9 +7,6 @@ export const createOrderSchema = z.object({
   amount_paid: z.coerce.number().nonnegative("O valor pago não pode ser negativo"),
   quantity: z.coerce.number().int().positive("A quantidade deve ser um número inteiro maior que zero"),
   tagType: z.string().trim().min(1, "O tipo de filamento (Tag) é obrigatório"),
-  
-  link: z.string().url("Formato de URL inválido").trim().optional().or(z.literal("")),
-  machine: z.string().trim().optional(),
   cost: z.coerce.number().nonnegative("O custo não pode ser negativo").optional(),
   payment_method: z.string().trim().optional(),
   client_id: z.coerce.number().int().positive().optional(),
