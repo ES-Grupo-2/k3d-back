@@ -45,8 +45,6 @@ model Order {
   section        Section  @default(PENDENTE)
   status         String   @default("NAO_PAGO")
   archive        String
-  link           String?
-  machine        String?
   price          Float
   amount_paid    Float
   cost           Float?
