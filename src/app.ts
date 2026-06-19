@@ -1,8 +1,8 @@
 import multipart from "@fastify/multipart";
 import fastify, { FastifyServerOptions } from "fastify";
+import { errorHandler } from "./utils/errors";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { orderRoutes } from "./modules/order/order.routes";
-import { authRoutes } from "./modules/auth/auth.routes";
 import { kanbanRoutes } from "./modules/kanban/kanban.routes";
 import { clientsRoutes } from "./modules/client/clients.routes";
 // import { tagsRoutes }       from "./modules/tags/tags.routes";
@@ -15,7 +15,6 @@ export function buildApp(options: FastifyServerOptions = { logger: true }) {
   const app = fastify(options);
 
   app.setErrorHandler(errorHandler);
-  app.register(authRoutes);
   app.register(multipart);
   app.register(orderRoutes);
   app.register(authRoutes, { prefix: "/auth" });
