@@ -5,6 +5,7 @@ export const periodoSchema = z.enum(["SEMANAL", "MENSAL", "SEMESTRAL"]);
 export const financeiroQuerySchema = z.object({
   periodo: periodoSchema.default("MENSAL"),
   ref: z.string().optional(),
+  tagType: z.string().optional(),
 });
 
 export type Periodo = z.infer<typeof periodoSchema>;

@@ -3,16 +3,19 @@ import { getDateRange } from "../../helpers/dateFilters";
 import { Periodo, DashboardFinanceiroResponse } from "./financeiro.types";
 
 export class DashboardFinanceiroService {
-  static async getFinanceiro(periodo: Periodo, ref?: string): Promise<DashboardFinanceiroResponse> {
+  static async getFinanceiro(periodo: Periodo, ref?: string, tagType?: string): Promise<DashboardFinanceiroResponse> {
     const { start, end } = getDateRange(periodo, ref);
+
+    const where: Record<string, unknown> = {
+      created_at: { gte: start, lte: end },
+    };
+    if (tagType) where.tagType = tagType;
 
     const result = await prisma.order.aggregate({
       _sum: { amount_paid: true, cost: true },
       _avg: { amount_paid: true, price: true },
       _count: { id: true },
-      where: {
-        created_at: { gte: start, lte: end },
-      },
+      where,
     });
 
     const receitaTotal = result._sum.amount_paid ?? 0;
