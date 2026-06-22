@@ -1,4 +1,4 @@
-import { Periodo } from "../modules/dashboard/financeiro.types";
+import { Periodo } from "../modules/dashboard/dashboard.types";
 
 export function getDateRange(periodo: Periodo, ref?: string) {
   if (ref) {
