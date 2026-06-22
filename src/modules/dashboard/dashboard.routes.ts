@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { DashboardFinanceiroController } from "./financeiro.controller";
+import { DashboardController } from "./dashboard.controller";
 import { verifyJWT } from "../../middlewares/auth";
 import { checkRole } from "../../middlewares/rbac";
 
@@ -7,6 +7,12 @@ export async function dashboardRoutes(app: FastifyInstance) {
   app.get(
     "/financeiro",
     { preHandler: [verifyJWT, checkRole(["GERENTE"])] },
-    DashboardFinanceiroController.financeiro,
+    DashboardController.financeiro,
+  );
+
+  app.get(
+    "/operacional",
+    { preHandler: [verifyJWT, checkRole(["OPERACIONAL", "GERENTE"])] },
+    DashboardController.operacional,
   );
 }
