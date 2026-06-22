@@ -1,15 +1,15 @@
 import multipart from "@fastify/multipart";
 import fastify, { FastifyServerOptions } from "fastify";
-import { errorHandler } from "./utils/errors";
 import { authRoutes } from "./modules/auth/auth.routes";
-import { orderRoutes } from "./modules/order/order.routes";
-import { kanbanRoutes } from "./modules/kanban/kanban.routes";
 import { clientsRoutes } from "./modules/client/clients.routes";
+import { kanbanRoutes } from "./modules/kanban/kanban.routes";
+import { orderRoutes } from "./modules/order/order.routes";
+import { errorHandler } from "./utils/errors";
 // import { tagsRoutes }       from "./modules/tags/tags.routes";
 // import { uploadRoutes }     from "./modules/upload/upload.routes";
-// import { dashboardRoutes }  from "./modules/dashboard/dashboard.routes";
+import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 // import { calculatorRoutes } from "./modules/calculator/calculator.routes";
-import { minioRoutes } from "./modules/files/files.routes";
+import { filesRoutes } from "./modules/files/files.routes";
 
 export function buildApp(options: FastifyServerOptions = { logger: true }) {
   const app = fastify(options);
@@ -22,9 +22,9 @@ export function buildApp(options: FastifyServerOptions = { logger: true }) {
   app.register(clientsRoutes, { prefix: "/clients" });
   // app.register(tagsRoutes,       { prefix: "/tags" });
   // app.register(uploadRoutes,     { prefix: "/upload" });
-  // app.register(dashboardRoutes,  { prefix: "/dashboard" });
+  app.register(dashboardRoutes, { prefix: "/dashboard" });
   // app.register(calculatorRoutes, { prefix: "/calculator" });
-  app.register(minioRoutes, { prefix: "/files" });
+  app.register(filesRoutes, { prefix: "/files" });
 
   return app;
 }
