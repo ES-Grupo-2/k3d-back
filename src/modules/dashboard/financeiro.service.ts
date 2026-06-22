@@ -3,8 +3,8 @@ import { getDateRange } from "../../helpers/dateFilters";
 import { Periodo, DashboardFinanceiroResponse } from "./financeiro.types";
 
 export class DashboardFinanceiroService {
-  static async getFinanceiro(periodo: Periodo, _ref?: string): Promise<DashboardFinanceiroResponse> {
-    const { start, end } = getDateRange(periodo);
+  static async getFinanceiro(periodo: Periodo, ref?: string): Promise<DashboardFinanceiroResponse> {
+    const { start, end } = getDateRange(periodo, ref);
 
     const result = await prisma.order.aggregate({
       _sum: { amount_paid: true, cost: true },

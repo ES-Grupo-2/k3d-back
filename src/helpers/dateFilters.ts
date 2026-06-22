@@ -1,6 +1,13 @@
 import { Periodo } from "../modules/dashboard/financeiro.types";
 
-export function getDateRange(periodo: Periodo) {
+export function getDateRange(periodo: Periodo, ref?: string) {
+  if (ref) {
+    const [startStr, endStr] = ref.split(",");
+    const start = new Date(`${startStr}T00:00:00`);
+    const end = new Date(`${endStr}T23:59:59.999`);
+    return { start, end };
+  }
+
   const now = new Date();
   const end = new Date(
     now.getFullYear(),
