@@ -7,6 +7,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
   app.get(
     "/financeiro",
     { preHandler: [verifyJWT, checkRole(["GERENTE"])] },
-    DashboardFinanceiroController.getIndicadores,
+    DashboardFinanceiroController.financeiro,
   );
 }

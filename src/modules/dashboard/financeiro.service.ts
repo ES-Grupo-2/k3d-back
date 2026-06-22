@@ -1,47 +1,33 @@
 import { prisma } from "../../lib/clientPrisma";
+import { getDateRange } from "../../helpers/dateFilters";
 import { Periodo, DashboardFinanceiroResponse } from "./financeiro.types";
 
 export class DashboardFinanceiroService {
-  static async getIndicadores(periodo: Periodo): Promise<DashboardFinanceiroResponse> {
-    const { start, end } = this.getPeriodo(periodo);
+  static async getFinanceiro(periodo: Periodo, _ref?: string): Promise<DashboardFinanceiroResponse> {
+    const { start, end } = getDateRange(periodo);
 
     const result = await prisma.order.aggregate({
-      _sum: { amount_paid: true },
-      _avg: { amount_paid: true },
+      _sum: { amount_paid: true, cost: true },
+      _avg: { amount_paid: true, price: true },
       _count: { id: true },
       where: {
         created_at: { gte: start, lte: end },
       },
     });
 
+    const receitaTotal = result._sum.amount_paid ?? 0;
+    const custoTotal = result._sum.cost ?? 0;
+
     return {
       periodo,
       dataInicio: start.toISOString(),
       dataFim: end.toISOString(),
-      receitaTotal: result._sum.amount_paid ?? 0,
+      receitaTotal,
+      custoTotal,
+      lucroTotal: receitaTotal - custoTotal,
+      precoMedio: result._avg.price ?? 0,
       ticketMedio: result._avg.amount_paid ?? 0,
       totalPedidos: result._count.id,
     };
-  }
-
-  private static getPeriodo(periodo: Periodo) {
-    const now = new Date();
-    const end = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23, 59, 59, 999,
-    );
-
-    const dias: Record<Periodo, number> = {
-      SEMANAL: 7,
-      MENSAL: 30,
-      SEMESTRAL: 180,
-    };
-
-    const start = new Date(end.getTime() - dias[periodo] * 24 * 60 * 60 * 1000);
-    start.setHours(0, 0, 0, 0);
-
-    return { start, end };
   }
 }
