@@ -2,7 +2,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 
 let instance: S3Client | null = null;
 
-export const getMinioClient = (): S3Client => {
+export const getFilesClient = (): S3Client => {
     if (!instance) {
         instance = new S3Client({
             endpoint: `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}`,
