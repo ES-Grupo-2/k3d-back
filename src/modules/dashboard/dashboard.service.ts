@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/clientPrisma";
-import { getDateRange } from "../../helpers/dateFilters";
+import { getDateRange } from "../../utils/dateFilters";
 import {
   Periodo,
   DashboardFinanceiroResponse,
