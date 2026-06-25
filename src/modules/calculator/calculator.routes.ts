@@ -7,19 +7,19 @@ export async function calculatorRoutes(app: FastifyInstance) {
   app.addHook("preHandler", verifyJWT);
 
   app.post(
-    "/calculator/parameters",
+    "/parameters",
     { preHandler: [checkRole(["GERENTE"])] },
     CalculatorController.updateParametersHandler
   );
 
   app.get(
-    "/calculator/parameters",
+    "/parameters",
     { preHandler: [checkRole(["GERENTE"])] },
     CalculatorController.getParametersHandler
   );
 
   app.post(
-    "/calculator/calculate",
+    "/calculate",
     { preHandler: [checkRole(["GERENTE"])] },
     CalculatorController.calculateHandler
   );

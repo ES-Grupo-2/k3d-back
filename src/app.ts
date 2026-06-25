@@ -8,7 +8,7 @@ import { clientsRoutes } from "./modules/client/clients.routes";
 // import { tagsRoutes }       from "./modules/tags/tags.routes";
 // import { uploadRoutes }     from "./modules/upload/upload.routes";
 // import { dashboardRoutes }  from "./modules/dashboard/dashboard.routes";
-// import { calculatorRoutes } from "./modules/calculator/calculator.routes";
+import { calculatorRoutes } from "./modules/calculator/calculator.routes";
 import { minioRoutes } from "./modules/files/files.routes";
 
 export function buildApp(options: FastifyServerOptions = { logger: true }) {
@@ -23,7 +23,7 @@ export function buildApp(options: FastifyServerOptions = { logger: true }) {
   // app.register(tagsRoutes,       { prefix: "/tags" });
   // app.register(uploadRoutes,     { prefix: "/upload" });
   // app.register(dashboardRoutes,  { prefix: "/dashboard" });
-  // app.register(calculatorRoutes, { prefix: "/calculator" });
+  app.register(calculatorRoutes, { prefix: "/calculator" });
   app.register(minioRoutes, { prefix: "/files" });
 
   return app;
