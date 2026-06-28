@@ -44,7 +44,7 @@ model Order {
   title          String
   section        Section  @default(PENDENTE)
   status         String   @default("NAO_PAGO")
-  archive        String
+  archive        String?
   price          Float
   amount_paid    Float
   cost           Float?

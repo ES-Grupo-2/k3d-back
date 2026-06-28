@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createOrderSchema = z.object({
   title: z.string().trim().min(1, "O título do pedido é obrigatório"),
-  archive: z.string().trim().min(1, "O nome do arquivo GCODE é obrigatório"),
+  archive: z.string().trim().optional(),
   price: z.coerce.number().positive("O preço deve ser um valor maior que zero"),
   amount_paid: z.coerce.number().nonnegative("O valor pago não pode ser negativo"),
   quantity: z.coerce.number().int().positive("A quantidade deve ser um número inteiro maior que zero"),
@@ -25,7 +25,7 @@ export const moveOrderSchema = z.object({
 export const getOrderQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
-  
+
   title: z.string().trim().optional().or(z.literal("")),
   section: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"]).optional().or(z.literal("")),
   status: z.string().trim().optional().or(z.literal("")),
