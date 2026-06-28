@@ -1,45 +1,51 @@
 import { prisma }            from "../../lib/clientPrisma";
 import { AppError }          from "../../utils/errors";
 import { CreateClientInput, UpdateClientInput } from "./clients.types";
+import { paginatePrisma } from "../../utils/pagination";
 
 export class ClientsService {
 
-    static async list(search?: string) {
-        return prisma.client.findMany({
-        where: search
-            ? {
-                name: {
-                contains: search,
-                mode: "insensitive",
+    static async list(page: number = 1, pageSize: number = 10, search?: string) {
+        return paginatePrisma(
+            prisma.client,
+            {
+                where: search
+                    ? {
+                        name: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                        },
+                    }
+                    : undefined,
+                orderBy: {
+                    name: "asc" as const,
                 },
-            }
-            : undefined,
-
-        orderBy: {
-            name: "asc",
-        },
-        });
+            },
+            { page, pageSize }
+        );
     }
 
-    static async listWithOrders(search?: string) {
-        return prisma.client.findMany({
-            where: search
-                ? {
-                    name: {
-                    contains: search,
-                    mode: "insensitive",
-                    },
-                }
-                : undefined,
-
+    static async listWithOrders(page: number = 1, pageSize: number = 10, search?: string) {
+        return paginatePrisma(
+            prisma.client,
+            {
+                where: search
+                    ? {
+                        name: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                        },
+                    }
+                    : undefined,
                 include: {
                     orders: true,
                 },
-
                 orderBy: {
-                    name: "asc",
+                    name: "asc" as const,
                 },
-            });
+            },
+            { page, pageSize }
+        );
   }
   
     static async getById(id: number) {

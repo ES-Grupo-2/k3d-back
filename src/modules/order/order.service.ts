@@ -1,6 +1,7 @@
 import { Prisma } from "../../generated/prisma";
 import { prisma } from "../../lib/clientPrisma";
 import {GetOrderQueryInput, CreateOrderInput, UpdateOrderInput, MoveOrderInput} from "./order.types";
+import { paginatePrisma } from "../../utils/pagination";
 
 export class OrderService{
 
@@ -93,35 +94,20 @@ async updateOrder(id: number, data: UpdateOrderInput) {
 
 async getOrders(
   page: number = 1, 
-  limit: number = 10, 
-  filters: Omit<GetOrderQueryInput, "page" | "limit"> = {}
-){    const currentPage = Math.max(1, page);
-    const currentLimit = Math.max(1, limit);
-    const skip = (currentPage - 1) * currentLimit;
-
+  pageSize: number = 10, 
+  filters: Omit<GetOrderQueryInput, "page" | "pageSize"> = {}
+){
     const where = this.compileFilters(filters);
 
-    const [orders, totalItems] = await prisma.$transaction([
-      prisma.order.findMany({
+    return paginatePrisma(
+      prisma.order,
+      {
         where,
-        skip,
-        take: currentLimit,
         orderBy: { created_at: 'desc' },
         include: { client: true, tag: true }
-      }),
-      prisma.order.count({ where })
-    ]);
-
-    return {
-      data: orders,
-      meta: {
-        totalItems,
-        itemCount: orders.length,
-        itemsPerPage: currentLimit,
-        totalPages: Math.ceil(totalItems / currentLimit),
-        currentPage
-      }
-    };
+      },
+      { page, pageSize }
+    );
   }
 
 
