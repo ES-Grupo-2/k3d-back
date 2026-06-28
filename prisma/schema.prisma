@@ -53,8 +53,8 @@ model Order {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   tagType        String
-  clientId       Int?     @map("client_id")
-  client         Client?  @relation(fields: [clientId], references: [id])
+  clientId       Int      @map("client_id")
+  client         Client   @relation(fields: [clientId], references: [id])
   tag            Tag      @relation(fields: [tagType], references: [type], map: "orders_tagId_fkey")
 
   @@map("orders")

@@ -68,15 +68,12 @@ export class OrderService {
       throw new Error('Pedido não encontrado.');
     }
 
-
-
     const updatedOrder = await prisma.order.update({
       where: { id: id },
       data: {
         title: data.title,
         tagType: data.tagType,
         archive: data.archive,
-        clientId: data.client_id,
         price: data.price,
         amount_paid: data.amount_paid,
         quantity: data.quantity,
