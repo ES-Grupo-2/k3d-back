@@ -38,17 +38,17 @@ if (_env.success === false) {
   process.exit(1);
 }
 
-const minioKeys = [
+const filesKeys = [
   'MINIO_ENDPOINT',
   'MINIO_ACCESS_KEY',
   'MINIO_SECRET_KEY',
   'MINIO_BUCKET'
 ];
 
-const missingMinio = minioKeys.filter(key => !process.env[key]);
+const missingFiles = filesKeys.filter(key => !process.env[key]);
 
-if (missingMinio.length > 0) {
-  console.warn('\n[Warning] MinIO variables are missing:', missingMinio);
+if (missingFiles.length > 0) {
+  console.warn('\n[Warning] MinIO variables are missing:', missingFiles);
   console.warn('The server will start, but file upload features will not work.\n');
 }
 

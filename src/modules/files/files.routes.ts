@@ -1,21 +1,21 @@
 import { FastifyInstance } from "fastify";
 import { verifyJWT } from "../../middlewares/auth";
-import { MinioController } from "./files.controller";
+import { FilesController } from "./files.controller";
 
-const minioController = new MinioController();
+const filesController = new FilesController();
 
-export async function minioRoutes(app: FastifyInstance) {
+export async function filesRoutes(app: FastifyInstance) {
     app.addHook("preHandler", verifyJWT);
 
     app.post("/",
-        minioController.handleUpload
+        filesController.handleUpload
     );
 
     app.get("/:fileName",
-        minioController.handleGet
+        filesController.handleGet
     );
 
     app.delete("/:fileName",
-        minioController.handleDelete
+        filesController.handleDelete
     );
 }

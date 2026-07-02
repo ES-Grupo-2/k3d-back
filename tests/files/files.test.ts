@@ -14,8 +14,8 @@ vi.mock("@aws-sdk/lib-storage", () => {
     return { Upload: MockUpload };
 });
 
-vi.mock("../../src/lib/minIo", () => ({
-    getMinioClient: vi.fn(() => ({
+vi.mock("../../src/lib/filesClient", () => ({
+    getFilesClient: vi.fn(() => ({
         send: mockS3Send,
     })),
 }));
@@ -85,7 +85,7 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-describe("minio routes", () => {
+describe("files routes", () => {
 
 
     describe("POST /files", () => {

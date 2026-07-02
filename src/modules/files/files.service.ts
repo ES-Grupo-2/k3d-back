@@ -1,11 +1,11 @@
 import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { getMinioClient } from "../../lib/minIo";
+import { getFilesClient } from "../../lib/filesClient";
 import { FastifyUploadFile, UploadResponse } from "./files.types";
 
-export class MinioService {
+export class FilesService {
     private bucketName = process.env.MINIO_BUCKET || "k3d-files";
-    private minioClient = getMinioClient();
+    private s3Client = getFilesClient();
 
     async uploadFile(file: FastifyUploadFile): Promise<UploadResponse> {
         const uniqueFileName = `${Date.now()}-${file.filename}`;
@@ -14,7 +14,7 @@ export class MinioService {
             console.log("Iniciando upload para o bucket:", this.bucketName);
             console.log("Nome do arquivo:", uniqueFileName);
             const uploadManager = new Upload({
-                client: this.minioClient,
+                client: this.s3Client,
                 params: {
                     Bucket: this.bucketName,
                     Key: uniqueFileName,
@@ -46,7 +46,7 @@ export class MinioService {
                 Key: fileName,
             });
 
-            const response = await this.minioClient.send(command);
+            const response = await this.s3Client.send(command);
 
             if (!response.Body) {
                 throw new Error("Arquivo vazio ou não encontrado.");
@@ -69,7 +69,7 @@ export class MinioService {
                 Key: fileName,
             });
 
-            await this.minioClient.send(command);
+            await this.s3Client.send(command);
 
             return { message: `Arquivo ${fileName} deletado com sucesso.` };
         } catch (error) {
