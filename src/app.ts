@@ -9,7 +9,7 @@ import { errorHandler } from "./utils/errors";
 // import { uploadRoutes }     from "./modules/upload/upload.routes";
 import { dashboardRoutes }  from "./modules/dashboard/dashboard.routes";
 import { calculatorRoutes } from "./modules/calculator/calculator.routes";
-import { minioRoutes } from "./modules/files/files.routes";
+import { filesRoutes } from "./modules/files/files.routes";
 
 export function buildApp(options: FastifyServerOptions = { logger: true }) {
   const app = fastify(options);
@@ -24,7 +24,7 @@ export function buildApp(options: FastifyServerOptions = { logger: true }) {
   // app.register(uploadRoutes,     { prefix: "/upload" });
   app.register(dashboardRoutes,  { prefix: "/dashboard" });
   app.register(calculatorRoutes, { prefix: "/calculator" });
-  app.register(minioRoutes, { prefix: "/files" });
+  app.register(filesRoutes, { prefix: "/files" });
 
   return app;
 }
