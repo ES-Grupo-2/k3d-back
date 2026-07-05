@@ -235,8 +235,8 @@ describe("calculator routes", () => {
           energyCost: 9.5,
           depreciationCost: 2.5,
         },
-        custoTotal: 87.0,
-        precoSugerido: 174.0,
+        totalCost: 87.0,
+        suggestedPrice: 174.0,
       });
     });
 
