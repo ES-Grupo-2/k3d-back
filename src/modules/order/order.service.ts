@@ -1,33 +1,33 @@
 import { Prisma } from "../../generated/prisma";
 import { prisma } from "../../lib/clientPrisma";
-import {GetOrderQueryInput, CreateOrderInput, UpdateOrderInput, MoveOrderInput} from "./order.types";
+import { CreateOrderInput, GetOrderQueryInput, MoveOrderInput, UpdateOrderInput } from "./order.types";
 
-export class OrderService{
+export class OrderService {
 
-    async createOrder(data: CreateOrderInput) {
-  const newOrder = await prisma.order.create({
-    data: {
-      title: data.title,
-      tagType: data.tagType,
-      archive: data.archive,
-      price: data.price,
-      amount_paid: data.amount_paid,
-      quantity: data.quantity,
-      payment_method: data.payment_method,
-      cost: data.cost,
-      clientId: data.client_id,
-      created_at: new Date(),
-      updated_at: new Date(),
-      section: data.section || 'PENDENTE', 
-      status: data.status || 'NAOPAGO'
-    }
-  });
+  async createOrder(data: CreateOrderInput) {
+    const newOrder = await prisma.order.create({
+      data: {
+        title: data.title,
+        tagType: data.tagType,
+        archive: data.archive,
+        price: data.price,
+        amount_paid: data.amount_paid,
+        quantity: data.quantity,
+        payment_method: data.payment_method,
+        cost: data.cost,
+        clientId: data.client_id,
+        created_at: new Date(),
+        updated_at: new Date(),
+        section: data.section || 'PENDENTE',
+        status: data.status || 'NAO_PAGO'
+      }
+    });
 
-  return newOrder;
-}
+    return newOrder;
+  }
 
-async moveOrder(id: number, destinationSection: MoveOrderInput["destinationSection"]) {
-      const currentOrder = await prisma.order.findUnique({
+  async moveOrder(id: number, destinationSection: MoveOrderInput["destinationSection"]) {
+    const currentOrder = await prisma.order.findUnique({
       where: { id: id }
     });
 
@@ -59,43 +59,42 @@ async moveOrder(id: number, destinationSection: MoveOrderInput["destinationSecti
     return { message: 'Pedido removido com sucesso do Kanban.' };
   }
 
-async updateOrder(id: number, data: UpdateOrderInput) {
+  async updateOrder(id: number, data: UpdateOrderInput) {
     const currentOrder = await prisma.order.findUnique({
-    where: { id: id }
-  });
+      where: { id: id }
+    });
 
-  if (!currentOrder) {
-    throw new Error('Pedido não encontrado.');
+    if (!currentOrder) {
+      throw new Error('Pedido não encontrado.');
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: id },
+      data: {
+        title: data.title,
+        tagType: data.tagType,
+        archive: data.archive,
+        price: data.price,
+        amount_paid: data.amount_paid,
+        quantity: data.quantity,
+        payment_method: data.payment_method,
+        cost: data.cost,
+        status: data.status,
+        section: data.section,
+        updated_at: new Date()
+      }
+    });
+
+    return updatedOrder;
   }
 
-  
 
-  const updatedOrder = await prisma.order.update({
-    where: { id: id },
-    data: {
-      title: data.title,
-      tagType: data.tagType,
-      archive: data.archive,
-      clientId: data.client_id,
-      price: data.price,
-      amount_paid: data.amount_paid,
-      quantity: data.quantity,
-      payment_method: data.payment_method,
-      cost: data.cost,
-      status: data.status,
-      section: data.section,
-      updated_at: new Date()}
-  });
-
-  return updatedOrder;
-}
-  
-
-async getOrders(
-  page: number = 1, 
-  limit: number = 10, 
-  filters: Omit<GetOrderQueryInput, "page" | "limit"> = {}
-){    const currentPage = Math.max(1, page);
+  async getOrders(
+    page: number = 1,
+    limit: number = 10,
+    filters: Omit<GetOrderQueryInput, "page" | "limit"> = {}
+  ) {
+    const currentPage = Math.max(1, page);
     const currentLimit = Math.max(1, limit);
     const skip = (currentPage - 1) * currentLimit;
 
@@ -145,10 +144,10 @@ async getOrders(
             ? { contains: value, mode: 'insensitive' }
             : value;
         },
-        Int:     () => { compiledWhere[prismaField] = Number(value); },
-        Float:   () => { compiledWhere[prismaField] = Number(value); },
+        Int: () => { compiledWhere[prismaField] = Number(value); },
+        Float: () => { compiledWhere[prismaField] = Number(value); },
         Boolean: () => { compiledWhere[prismaField] = value === 'true' || value === true; },
-        enum:    () => { compiledWhere[prismaField] = value; }
+        enum: () => { compiledWhere[prismaField] = value; }
       };
 
       const execute = strategy[fieldInfo.type] || strategy[fieldInfo.kind];

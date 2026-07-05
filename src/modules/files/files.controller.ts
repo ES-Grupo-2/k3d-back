@@ -1,11 +1,11 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Readable } from "stream";
-import { MinioService } from "./files.service";
+import { FilesService } from "./files.service";
 import { FastifyUploadFile } from "./files.types";
 
-const minioService = new MinioService();
+const filesService = new FilesService();
 
-export class MinioController {
+export class FilesController {
 
     async handleUpload(req: FastifyRequest, res: FastifyReply) {
         try {
@@ -15,7 +15,7 @@ export class MinioController {
                 return res.status(400).send({ error: "Nenhum arquivo foi enviado." });
             }
 
-            const result = await minioService.uploadFile(data as unknown as FastifyUploadFile);
+            const result = await filesService.uploadFile(data as unknown as FastifyUploadFile);
 
             return res.status(201).send(result);
         } catch (error) {
@@ -32,7 +32,7 @@ export class MinioController {
                 return res.status(400).send({ error: "Nome do arquivo não informado." });
             }
 
-            const { stream, contentType } = await minioService.getFile(fileName);
+            const { stream, contentType } = await filesService.getFile(fileName);
 
             res.header("Content-Type", contentType);
 
@@ -51,7 +51,7 @@ export class MinioController {
                 return res.status(400).send({ error: "Nome do arquivo não informado." });
             }
 
-            const result = await minioService.deleteFile(fileName);
+            const result = await filesService.deleteFile(fileName);
 
             return res.status(200).send(result);
         } catch (error) {
