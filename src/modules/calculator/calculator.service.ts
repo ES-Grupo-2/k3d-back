@@ -50,8 +50,8 @@ export class CalculatorService {
         energyCost: Number(energyCost.toFixed(2)),
         depreciationCost: Number(depreciationCost.toFixed(2)),
       },
-      custoTotal: Number(totalCost.toFixed(2)),
-      precoSugerido: Number(suggestedPrice.toFixed(2)),
+      totalCost: Number(totalCost.toFixed(2)),
+      suggestedPrice: Number(suggestedPrice.toFixed(2)),
     };
   }
 }
