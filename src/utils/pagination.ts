@@ -18,17 +18,19 @@ export interface PaginatedResult<T> {
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().positive().max(100, "O tamanho da página não pode ser maior que 100").default(10),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(100, "O tamanho da página não pode ser maior que 100")
+    .default(10),
 });
 
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;
 
-/**
- * Paginates a standard in-memory array.
- */
 export function paginateArray<T>(
   items: T[],
-  params: { page: number; pageSize: number }
+  params: { page: number; pageSize: number },
 ): PaginatedResult<T> {
   const page = Math.max(1, params.page);
   const pageSize = Math.max(1, params.pageSize);
@@ -49,26 +51,23 @@ export function paginateArray<T>(
   };
 }
 
-// Minimal interface representation of any Prisma model delegate (e.g., prisma.order, prisma.client)
 export interface PrismaModelDelegate<T, Args> {
   findMany(args?: Args): Promise<T[]>;
   count(args?: { where?: any }): Promise<number>;
 }
 
-/**
- * Paginates a Prisma query.
- */
-export async function paginatePrisma<T, Args extends { where?: any; skip?: number; take?: number }>(
+export async function paginatePrisma<
+  T,
+  Args extends { where?: any; skip?: number; take?: number },
+>(
   model: PrismaModelDelegate<T, Args>,
   args: Args,
-  params: { page: number; pageSize: number }
+  params: { page: number; pageSize: number },
 ): Promise<PaginatedResult<T>> {
   const page = Math.max(1, params.page);
   const pageSize = Math.max(1, params.pageSize);
   const skip = (page - 1) * pageSize;
 
-  // We run findMany and count in parallel.
-  // We typecast to any to allow override of skip and take on the generic Args object safely.
   const [data, totalItems] = await Promise.all([
     model.findMany({
       ...args,

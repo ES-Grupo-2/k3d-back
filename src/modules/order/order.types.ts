@@ -4,19 +4,19 @@ import { paginationQuerySchema } from "../../utils/pagination";
 
 export const createOrderSchema = z.object({
   title: z.string().trim().min(1, "O título do pedido é obrigatório"),
-  archive: z.string().trim().min(1, "O nome do arquivo GCODE é obrigatório"),
+  archive: z.string().trim().optional(),
   price: z.coerce.number().positive("O preço deve ser um valor maior que zero"),
   amount_paid: z.coerce.number().nonnegative("O valor pago não pode ser negativo"),
   quantity: z.coerce.number().int().positive("A quantidade deve ser um número inteiro maior que zero"),
   tagType: z.string().trim().min(1, "O tipo de filamento (Tag) é obrigatório"),
   cost: z.coerce.number().nonnegative("O custo não pode ser negativo").optional(),
   payment_method: z.string().trim().optional(),
-  client_id: z.coerce.number().int().positive().optional(),
+  client_id: z.coerce.number().int().positive("ID do cliente é obrigatório"),
   section: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"]).optional(),
   status: z.string().trim().optional(),
 });
 
-export const updateOrderSchema = createOrderSchema.partial();
+export const updateOrderSchema = createOrderSchema.partial().omit({ client_id: true });
 
 export const moveOrderSchema = z.object({
   destinationSection: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"], {
