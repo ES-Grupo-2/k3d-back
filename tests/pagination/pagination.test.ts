@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { paginateArray, paginatePrisma } from "../../src/utils/pagination";
+import { paginateArray, paginatePrisma, paginationQuerySchema } from "../../src/utils/pagination";
 
 describe("Pagination Utility", () => {
   describe("paginateArray", () => {
@@ -110,6 +110,32 @@ describe("Pagination Utility", () => {
         totalPages: 4,
         currentPage: 3,
       });
+    });
+  });
+
+  describe("paginationQuerySchema", () => {
+    it("accepts valid page sizes", () => {
+      const parsed = paginationQuerySchema.safeParse({ page: 2, pageSize: 50 });
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data).toEqual({ page: 2, pageSize: 50 });
+      }
+    });
+
+    it("enforces default values", () => {
+      const parsed = paginationQuerySchema.safeParse({});
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data).toEqual({ page: 1, pageSize: 10 });
+      }
+    });
+
+    it("rejects page size larger than 100", () => {
+      const parsed = paginationQuerySchema.safeParse({ pageSize: 101 });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.errors[0].message).toBe("O tamanho da página não pode ser maior que 100");
+      }
     });
   });
 });

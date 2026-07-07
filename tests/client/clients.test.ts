@@ -160,9 +160,9 @@ describe("clients routes", () => {
   // ── GET /with-orders ───────────────────────────────────────────────────────
 
   describe("GET /clients/with-orders", () => {
-    it("returns 200 and clients with their orders", async () => {
+    it("returns 200 and clients with their orders count", async () => {
       clientRepository.findMany.mockResolvedValue([
-        { ...baseClient, orders: [baseOrder] },
+        { ...baseClient, _count: { orders: 1 } },
       ]);
       clientRepository.count.mockResolvedValue(1);
 
@@ -170,7 +170,7 @@ describe("clients routes", () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject({
-        data: [{ id: 1, name: "Acme Corp", orders: [{ id: 10 }] }],
+        data: [{ id: 1, name: "Acme Corp", ordersCount: 1 }],
         meta: {
           totalItems: 1,
           itemCount: 1,
@@ -403,7 +403,7 @@ describe("clients routes", () => {
     it("returns 200 and a success message when client has no orders", async () => {
       clientRepository.findUnique.mockResolvedValue({
         ...baseClient,
-        orders: [],
+        _count: { orders: 0 },
       });
       clientRepository.delete.mockResolvedValue(baseClient);
 
@@ -421,7 +421,7 @@ describe("clients routes", () => {
     it("returns 400 when client has linked orders", async () => {
       clientRepository.findUnique.mockResolvedValue({
         ...baseClient,
-        orders: [baseOrder],
+        _count: { orders: 1 },
       });
 
       const response = await inject("DELETE", "/clients/1", authToken());

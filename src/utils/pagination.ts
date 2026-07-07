@@ -18,7 +18,7 @@ export interface PaginatedResult<T> {
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().positive().default(10),
+  pageSize: z.coerce.number().int().positive().max(100, "O tamanho da página não pode ser maior que 100").default(10),
 });
 
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;

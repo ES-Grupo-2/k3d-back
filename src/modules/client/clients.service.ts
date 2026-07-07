@@ -26,7 +26,7 @@ export class ClientsService {
     }
 
     static async listWithOrders(page: number = 1, pageSize: number = 10, search?: string) {
-        return paginatePrisma(
+        const paginatedResult = await paginatePrisma(
             prisma.client,
             {
                 where: search
@@ -38,7 +38,11 @@ export class ClientsService {
                     }
                     : undefined,
                 include: {
-                    orders: true,
+                    _count: {
+                        select: {
+                            orders: true,
+                        },
+                    },
                 },
                 orderBy: {
                     name: "asc" as const,
@@ -46,6 +50,17 @@ export class ClientsService {
             },
             { page, pageSize }
         );
+
+        return {
+            ...paginatedResult,
+            data: paginatedResult.data.map((client: any) => ({
+                id: client.id,
+                name: client.name,
+                phone: client.phone,
+                email: client.email,
+                ordersCount: client._count?.orders ?? 0,
+            })),
+        };
   }
   
     static async getById(id: number) {
@@ -88,8 +103,22 @@ export class ClientsService {
         }
 
   static async delete(id: number) {
-        const client = await ClientsService.getByIdWithOrders(id);
-        if (client.orders.length > 0) {
+        const client = await prisma.client.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: {
+                        orders: true,
+                    },
+                },
+            },
+        });
+
+        if (!client) {
+            throw new AppError("Cliente não encontrado", 404);
+        }
+
+        if (client._count.orders > 0) {
             throw new AppError(
             "Não é possível remover um cliente com pedidos vinculados",
             400
