@@ -53,6 +53,29 @@ async function injectPost(
   }
 }
 
+async function injectPut(
+  url: string,
+  payload: any,
+  token?: string
+): Promise<any> {
+  const app = buildApp({ logger: false });
+  try {
+    const response = await app.inject({
+      method: "PUT",
+      url,
+      payload,
+      headers: token
+        ? {
+            authorization: token,
+          }
+        : undefined,
+    });
+    return response as any;
+  } finally {
+    await app.close();
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -219,5 +242,97 @@ describe("RF-04 — Remoção de Pedido no Kanban (Blackbox)", () => {
     } finally {
       await app.close();
     }
+  });
+});
+
+describe("RF-05 — Edição de Pedido no Kanban (Blackbox)", () => {
+  it("TC-RF05-01 - Alterar o campo Título para 'Chaveiro Kria3D — Edição 2' e confirmar", async () => {
+    orderRepository.findUnique.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+    orderRepository.update.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro Kria3D — Edição 2",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+
+    const response = await injectPut(
+      "/orders/1",
+      {
+        title: "Chaveiro Kria3D — Edição 2",
+      },
+      authHeaderToken("OPERACIONAL")
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      title: "Chaveiro Kria3D — Edição 2",
+    });
+  });
+
+  it("TC-RF05-02 - Apagar o conteúdo do campo Título e confirmar", async () => {
+    orderRepository.findUnique.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+
+    const response = await injectPut(
+      "/orders/1",
+      {
+        title: "",
+      },
+      authHeaderToken("OPERACIONAL")
+    );
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("TC-RF05-03 - Alterar o campo Preço Total de '45,00' para '60,00' e confirmar", async () => {
+    orderRepository.findUnique.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+    orderRepository.update.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 60.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+
+    const response = await injectPut(
+      "/orders/1",
+      {
+        price: 60.0,
+      },
+      authHeaderToken("OPERACIONAL")
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      price: 60.0,
+    });
   });
 });
