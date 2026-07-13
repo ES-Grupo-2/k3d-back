@@ -246,7 +246,7 @@ describe("auth routes", () => {
   });
 
   describe("POST /auth/login", () => {
-    it("TC-RF02-01 - returns 200, a JWT token, and user data for valid credentials", async () => {
+    it("TC-RF02-01 / TC-RF02-02 - returns 200, a JWT token, and user data for valid credentials", async () => {
       const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,
@@ -279,7 +279,7 @@ describe("auth routes", () => {
       });
     });
 
-    it("TC-RF02-03 - returns 401 for unknown user", async () => {
+    it("TC-RF02-04 - returns 401 for unknown user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
 
       const response = await injectPost("/auth/login", {
@@ -293,7 +293,7 @@ describe("auth routes", () => {
       });
     });
 
-    it("TC-RF02-02 - returns 401 for wrong password", async () => {
+    it("TC-RF02-03 - returns 401 for wrong password", async () => {
       const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,

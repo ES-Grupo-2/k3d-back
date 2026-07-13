@@ -160,7 +160,7 @@ describe("order routes (Kanban)", () => {
   });
 
   describe("DELETE /orders/:id", () => {
-    it("returns 200 when order is successfully deleted", async () => {
+    it("TC-RF04-01 - returns 200 when order is successfully deleted", async () => {
       orderRepository.findUnique.mockResolvedValue(baseOrder);
 
       orderRepository.delete.mockResolvedValue(baseOrder);

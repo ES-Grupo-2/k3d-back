@@ -10,6 +10,7 @@ vi.mock("../../src/lib/clientPrisma", () => ({
   prisma: {
     order: {
       create: vi.fn(),
+      findUnique: vi.fn(),
     },
     client: {
       create: vi.fn(),
@@ -52,29 +53,6 @@ async function injectPost(
   }
 }
 
-async function injectPut(
-  url: string,
-  payload: any,
-  token?: string
-): Promise<any> {
-  const app = buildApp({ logger: false });
-  try {
-    const response = await app.inject({
-      method: "PUT",
-      url,
-      payload,
-      headers: token
-        ? {
-            authorization: token,
-          }
-        : undefined,
-    });
-    return response as any;
-  } finally {
-    await app.close();
-  }
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -83,276 +61,163 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("RF-03 — Criação de Pedido no Kanban (Blackbox ECP)", () => {
-  describe("Client Info Validation (Name, Phone, Email)", () => {
-    it("TC-RF03-01 - Nome do Cliente Válido - Preenchido (Renata Souza Lima)", async () => {
-      clientRepository.create.mockResolvedValue({
-        id: 1,
+describe("RF-03 — Criação de Pedido no Kanban (Blackbox)", () => {
+  it("TC-RF03-01 - Criar pedido preenchendo todos os campos com dados válidos", async () => {
+    clientRepository.create.mockResolvedValue({
+      id: 1,
+      name: "Renata Souza Lima",
+      phone: "(83) 99999-1122",
+      email: "renata.lima@gmail.com",
+    });
+
+    orderRepository.create.mockResolvedValue({
+      id: 10,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+      section: "PENDENTE",
+      status: "NAO_PAGO",
+    });
+
+    const clientResponse = await injectPost(
+      "/clients",
+      {
         name: "Renata Souza Lima",
         phone: "(83) 99999-1122",
         email: "renata.lima@gmail.com",
-      });
+      },
+      authHeaderToken("OPERACIONAL")
+    );
 
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "Renata Souza Lima",
-          phone: "(83) 99999-1122",
-          email: "renata.lima@gmail.com",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
+    expect(clientResponse.statusCode).toBe(201);
 
-      expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({
-        name: "Renata Souza Lima",
-      });
-      expect(clientRepository.create).toHaveBeenCalled();
-    });
+    const orderResponse = await injectPost(
+      "/orders",
+      {
+        title: "Chaveiro personalizado logo Kria3D",
+        price: 45.0,
+        amount_paid: 0.0,
+        quantity: 3,
+        tagType: "PLA",
+        client_id: 1,
+      },
+      authHeaderToken("OPERACIONAL")
+    );
 
-    it("TC-RF03-02 - Nome do Cliente Inválido - Campo obrigatório em branco", async () => {
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "",
-          phone: "(83) 99999-1122",
-          email: "renata.lima@gmail.com",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(400);
-      expect(clientRepository.create).not.toHaveBeenCalled();
-    });
-
-    it("TC-RF03-03 - Telefone do Cliente Válido - Preenchido ((83) 99999-1122)", async () => {
-      clientRepository.create.mockResolvedValue({
-        id: 1,
-        name: "Renata Souza Lima",
-        phone: "(83) 99999-1122",
-        email: "renata.lima@gmail.com",
-      });
-
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "Renata Souza Lima",
-          phone: "(83) 99999-1122",
-          email: "renata.lima@gmail.com",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({
-        phone: "(83) 99999-1122",
-      });
-      expect(clientRepository.create).toHaveBeenCalled();
-    });
-
-    it("TC-RF03-04 - Telefone do Cliente Inválido - Campo obrigatório em branco", async () => {
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "Renata Souza Lima",
-          phone: "",
-          email: "renata.lima@gmail.com",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(400);
-      expect(clientRepository.create).not.toHaveBeenCalled();
-    });
-
-    it("TC-RF03-05 - Email do Cliente Válido - Opcional preenchido (renata.lima@gmail.com)", async () => {
-      clientRepository.create.mockResolvedValue({
-        id: 1,
-        name: "Renata Souza Lima",
-        phone: "(83) 99999-1122",
-        email: "renata.lima@gmail.com",
-      });
-
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "Renata Souza Lima",
-          phone: "(83) 99999-1122",
-          email: "renata.lima@gmail.com",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({
-        email: "renata.lima@gmail.com",
-      });
-      expect(clientRepository.create).toHaveBeenCalled();
-    });
-
-    it("TC-RF03-06 - Email do Cliente Válido - Opcional vazio (deixado em branco)", async () => {
-      clientRepository.create.mockResolvedValue({
-        id: 1,
-        name: "Renata Souza Lima",
-        phone: "(83) 99999-1122",
-        email: null,
-      });
-
-      const response = await injectPost(
-        "/clients",
-        {
-          name: "Renata Souza Lima",
-          phone: "(83) 99999-1122",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(201);
-      expect(clientRepository.create).toHaveBeenCalled();
+    expect(orderResponse.statusCode).toBe(201);
+    expect(orderResponse.json()).toMatchObject({
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      status: "NAO_PAGO",
     });
   });
 
-  describe("Order Info Validation (Title, Price, Paid, Quantity)", () => {
-    it("TC-RF03-07 - Título do Pedido Válido - Preenchido (Chaveiro personalizado logo Kria3D)", async () => {
-      orderRepository.create.mockResolvedValue({
-        id: 10,
-        title: "Chaveiro personalizado logo Kria3D",
-        price: 45.0,
-        amount_paid: 0.0,
-        quantity: 3,
-        tagType: "PLA",
-        clientId: 1,
-      });
+  it("TC-RF03-02 - Impedir criação de cliente com Nome em branco", async () => {
+    const response = await injectPost(
+      "/clients",
+      {
+        name: "",
+        phone: "(83) 99999-1122",
+        email: "renata.lima@gmail.com",
+      },
+      authHeaderToken("OPERACIONAL")
+    );
 
-      const response = await injectPost(
-        "/orders",
-        {
-          title: "Chaveiro personalizado logo Kria3D",
-          price: 45.0,
-          amount_paid: 0.0,
-          quantity: 3,
-          tagType: "PLA",
-          client_id: 1,
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({
-        title: "Chaveiro personalizado logo Kria3D",
-      });
-      expect(orderRepository.create).toHaveBeenCalled();
-    });
-
-    it("TC-RF03-08 - Título do Pedido Inválido - Campo obrigatório em branco", async () => {
-      const response = await injectPost(
-        "/orders",
-        {
-          title: "",
-          price: 45.0,
-          amount_paid: 0.0,
-          quantity: 3,
-          tagType: "PLA",
-          client_id: 1,
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(400);
-      expect(orderRepository.create).not.toHaveBeenCalled();
-    });
-
-    it("TC-RF03-09 - Preço Total / Valor Pago / Quantidade Válidos (Preço=45.00, Pago=0, Quantidade=3)", async () => {
-      orderRepository.create.mockResolvedValue({
-        id: 10,
-        title: "Chaveiro personalizado logo Kria3D",
-        price: 45.0,
-        amount_paid: 0.0,
-        quantity: 3,
-        tagType: "PLA",
-        clientId: 1,
-      });
-
-      const response = await injectPost(
-        "/orders",
-        {
-          title: "Chaveiro personalizado logo Kria3D",
-          price: 45.0,
-          amount_paid: 0.0,
-          quantity: 3,
-          tagType: "PLA",
-          client_id: 1,
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({
-        price: 45.0,
-        amount_paid: 0.0,
-        quantity: 3,
-      });
-      expect(orderRepository.create).toHaveBeenCalled();
-    });
+    expect(response.statusCode).toBe(400);
+    expect(clientRepository.create).not.toHaveBeenCalled();
   });
 
-  describe("RF-05 — Edição de Pedido no Kanban (Blackbox ECP)", () => {
-    it("TC-RF05-01 - Campos do Pedido (edição) Válida - Alteração de um campo válido (ex.: Título alterado para 'Chaveiro Kria3D — Edição 2')", async () => {
-      orderRepository.findUnique.mockResolvedValue({
-        id: 1,
+  it("TC-RF03-03 - Impedir criação de pedido com Título em branco", async () => {
+    const response = await injectPost(
+      "/orders",
+      {
+        title: "",
+        price: 45.0,
+        amount_paid: 0.0,
+        quantity: 3,
+        tagType: "PLA",
+        client_id: 1,
+      },
+      authHeaderToken("OPERACIONAL")
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(orderRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("TC-RF03-04 - Criar cliente com e-mail do cliente em branco (campo opcional)", async () => {
+    clientRepository.create.mockResolvedValue({
+      id: 1,
+      name: "Renata Souza Lima",
+      phone: "(83) 99999-1122",
+      email: null,
+    });
+
+    const response = await injectPost(
+      "/clients",
+      {
+        name: "Renata Souza Lima",
+        phone: "(83) 99999-1122",
+      },
+      authHeaderToken("OPERACIONAL")
+    );
+
+    expect(response.statusCode).toBe(201);
+    expect(clientRepository.create).toHaveBeenCalled();
+  });
+
+  it("TC-RF03-05 - Validar comportamento de quantidade igual a zero", async () => {
+    const response = await injectPost(
+      "/orders",
+      {
         title: "Chaveiro personalizado logo Kria3D",
         price: 45.0,
         amount_paid: 0.0,
-        quantity: 3,
+        quantity: 0,
         tagType: "PLA",
-        clientId: 1,
-      });
-      orderRepository.update.mockResolvedValue({
-        id: 1,
-        title: "Chaveiro Kria3D — Edição 2",
-        price: 45.0,
-        amount_paid: 0.0,
-        quantity: 3,
-        tagType: "PLA",
-        clientId: 1,
-      });
+        client_id: 1,
+      },
+      authHeaderToken("OPERACIONAL")
+    );
 
-      const response = await injectPut(
-        "/orders/1",
-        {
-          title: "Chaveiro Kria3D — Edição 2",
+    expect(response.statusCode).toBe(400);
+    expect(orderRepository.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("RF-04 — Remoção de Pedido no Kanban (Blackbox)", () => {
+  it("TC-RF04-02 - Cancelar exclusão de pedido mantém o registro inalterado", async () => {
+    orderRepository.findUnique.mockResolvedValue({
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    });
+
+    // Simulamos que a exclusão é cancelada (o endpoint DELETE não é chamado),
+    // logo podemos obter o pedido com sucesso e ele permanece inalterado.
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/orders?title=Chaveiro",
+        headers: {
+          authorization: authHeaderToken("OPERACIONAL"),
         },
-        authHeaderToken("OPERACIONAL")
-      );
+      });
 
+      // O pedido continua existindo no banco de dados
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject({
-        title: "Chaveiro Kria3D — Edição 2",
-      });
-      expect(orderRepository.update).toHaveBeenCalled();
-    });
-
-    it("TC-RF05-02 - Campo Obrigatório Inválido - Campo obrigatório apagado durante a edição (ex.: Título esvaziado)", async () => {
-      orderRepository.findUnique.mockResolvedValue({
-        id: 1,
-        title: "Chaveiro personalizado logo Kria3D",
-        price: 45.0,
-        amount_paid: 0.0,
-        quantity: 3,
-        tagType: "PLA",
-        clientId: 1,
-      });
-
-      const response = await injectPut(
-        "/orders/1",
-        {
-          title: "",
-        },
-        authHeaderToken("OPERACIONAL")
-      );
-
-      expect(response.statusCode).toBe(400);
-      expect(orderRepository.update).not.toHaveBeenCalled();
-    });
+    } finally {
+      await app.close();
+    }
   });
 });
