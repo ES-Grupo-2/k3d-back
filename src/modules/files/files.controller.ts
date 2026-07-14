@@ -15,7 +15,7 @@ export class FilesController {
                 return res.status(400).send({ error: "Nenhum arquivo foi enviado." });
             }
 
-            const result = await filesService.uploadFile(data as unknown as FastifyUploadFile);
+            const result = await filesService.uploadFile(data);
 
             return res.status(201).send(result);
         } catch (error) {

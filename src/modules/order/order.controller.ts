@@ -1,6 +1,6 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { OrderService } from './order.service';
-import { createOrderSchema, updateOrderSchema, moveOrderSchema, getOrderQuerySchema } from './order.types';
+import { FastifyRequest, FastifyReply } from "fastify";
+import { OrderService } from "./order.service";
+import { createOrderSchema, updateOrderSchema, moveOrderSchema, getOrderQuerySchema } from "./order.types";
 
 const orderService = new OrderService();
 
@@ -23,7 +23,7 @@ export class OrderController {
             const orderId = Number(id);
 
             if (isNaN(orderId)) {
-                return reply.status(400).send({ error: 'ID do pedido inválido.' });
+                return reply.status(400).send({ error: "ID do pedido inválido." });
             }
 
             const { destinationSection } = moveOrderSchema.parse(request.body);
@@ -41,7 +41,7 @@ export class OrderController {
             const orderId = Number(id);
 
             if (isNaN(orderId)) {
-                return reply.status(400).send({ error: 'ID do pedido inválido.' });
+                return reply.status(400).send({ error: "ID do pedido inválido." });
             }
 
             // MUDANÇA AQUI: Valida apenas os campos enviados no PUT usando o esquema parcial
@@ -60,7 +60,7 @@ export class OrderController {
             const orderId = Number(id);
 
             if (isNaN(orderId)) {
-                return reply.status(400).send({ error: 'ID do pedido inválido.' });
+                return reply.status(400).send({ error: "ID do pedido inválido." });
             }
 
             const result = await orderService.deleteOrder(orderId);

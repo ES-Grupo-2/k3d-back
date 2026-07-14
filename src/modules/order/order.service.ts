@@ -18,8 +18,8 @@ export class OrderService {
         clientId: data.client_id,
         created_at: new Date(),
         updated_at: new Date(),
-        section: data.section || 'PENDENTE',
-        status: data.status || 'NAO_PAGO'
+        section: data.section || "PENDENTE",
+        status: data.status || "NAO_PAGO"
       }
     });
 
@@ -32,7 +32,7 @@ export class OrderService {
     });
 
     if (!currentOrder) {
-      throw new Error('Pedido não encontrado.');
+      throw new Error("Pedido não encontrado.");
     }
 
     const movedOrder = await prisma.order.update({
@@ -49,14 +49,14 @@ export class OrderService {
     });
 
     if (!orderExists) {
-      throw new Error('Pedido não encontrado.');
+      throw new Error("Pedido não encontrado.");
     }
 
     await prisma.order.delete({
       where: { id: id }
     });
 
-    return { message: 'Pedido removido com sucesso do Kanban.' };
+    return { message: "Pedido removido com sucesso do Kanban." };
   }
 
   async updateOrder(id: number, data: UpdateOrderInput) {
@@ -65,7 +65,7 @@ export class OrderService {
     });
 
     if (!currentOrder) {
-      throw new Error('Pedido não encontrado.');
+      throw new Error("Pedido não encontrado.");
     }
 
     const updatedOrder = await prisma.order.update({
@@ -105,7 +105,7 @@ export class OrderService {
         where,
         skip,
         take: currentLimit,
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         include: { client: true, tag: true }
       }),
       prisma.order.count({ where })
@@ -128,25 +128,25 @@ export class OrderService {
     const compiledWhere: Record<string, any> = {};
 
     const fieldsDefinition = Prisma.dmmf.datamodel.models.find(
-      (m) => m.name === 'Order'
+      (m) => m.name === "Order"
     )?.fields;
 
     Object.entries(filters).forEach(([key, value]) => {
-      if (value === undefined || value === null || value === '') return;
+      if (value === undefined || value === null || value === "") return;
 
-      const prismaField = key === 'client_id' ? 'clientId' : key;
+      const prismaField = key === "client_id" ? "clientId" : key;
       const fieldInfo = fieldsDefinition?.find((f) => f.name === prismaField);
       if (!fieldInfo) return;
 
       const strategy: Record<string, () => void> = {
         String: () => {
-          compiledWhere[prismaField] = prismaField === 'title'
-            ? { contains: value, mode: 'insensitive' }
+          compiledWhere[prismaField] = prismaField === "title"
+            ? { contains: value, mode: "insensitive" }
             : value;
         },
         Int: () => { compiledWhere[prismaField] = Number(value); },
         Float: () => { compiledWhere[prismaField] = Number(value); },
-        Boolean: () => { compiledWhere[prismaField] = value === 'true' || value === true; },
+        Boolean: () => { compiledWhere[prismaField] = value === "true" || value === true; },
         enum: () => { compiledWhere[prismaField] = value; }
       };
 
