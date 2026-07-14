@@ -13,6 +13,15 @@ vi.mock("../../src/lib/clientPrisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    calculatorParameter: {
+      findFirst: vi.fn(),
+    },
+    order: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+      aggregate: vi.fn(),
+      groupBy: vi.fn(),
+    },
   },
 }));
 
@@ -211,5 +220,108 @@ describe("RF-02 — Login de Usuário (Blackbox)", () => {
     );
 
     expect(response.statusCode).toBe(400);
+  });
+});
+
+describe("RF-14 — Controle de Acesso por Perfil (Blackbox)", () => {
+  it("TC-RF14-01 - Usuário Gerente acessa a Calculadora", async () => {
+    const calculatorRepo = (prisma as any).calculatorParameter;
+    calculatorRepo.findFirst.mockResolvedValue({ id: 1 });
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/calculator/parameters",
+        headers: { authorization: `Bearer ${authToken("GERENTE")}` },
+      });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF14-02 - Usuário Operacional tem acesso negado à Calculadora", async () => {
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/calculator/parameters",
+        headers: { authorization: `Bearer ${authToken("OPERACIONAL")}` },
+      });
+      expect(response.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF14-03 - Usuário Gerente acessa o Dashboard Financeiro", async () => {
+    const orderRepo = (prisma as any).order;
+    orderRepo.aggregate.mockResolvedValue({
+      _sum: { amount_paid: 0, cost: 0 },
+      _avg: { amount_paid: 0, price: 0 },
+      _count: { id: 0 },
+    });
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/dashboard/financeiro",
+        headers: { authorization: `Bearer ${authToken("GERENTE")}` },
+      });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF14-04 & TC-RF14-05 - Usuário Operacional tem acesso negado ao Dashboard Financeiro", async () => {
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/dashboard/financeiro",
+        headers: { authorization: `Bearer ${authToken("OPERACIONAL")}` },
+      });
+      expect(response.statusCode).toBe(403);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF14-06 - Usuário Operacional acessa o Kanban", async () => {
+    const orderRepo = (prisma as any).order;
+    orderRepo.findMany.mockResolvedValue([]);
+    orderRepo.count.mockResolvedValue(0);
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/orders",
+        headers: { authorization: `Bearer ${authToken("OPERACIONAL")}` },
+      });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF14-07 - Usuário Operacional acessa o Dashboard Operacional", async () => {
+    const orderRepo = (prisma as any).order;
+    orderRepo.groupBy.mockResolvedValue([]);
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/dashboard/operacional",
+        headers: { authorization: `Bearer ${authToken("OPERACIONAL")}` },
+      });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
   });
 });
