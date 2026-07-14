@@ -6,8 +6,8 @@ import { prisma } from "../../src/lib/clientPrisma";
 process.env.JWT_SECRET = "test-secret";
 process.env.JWT_EXPIRES_IN = "8h";
 
-vi.mock("../../src/lib/clientPrisma", () => ({
-  prisma: {
+vi.mock("../../src/lib/clientPrisma", () => {
+  const prismaMock: any = {
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -22,8 +22,13 @@ vi.mock("../../src/lib/clientPrisma", () => ({
       aggregate: vi.fn(),
       groupBy: vi.fn(),
     },
-  },
-}));
+  };
+  prismaMock.$transaction = vi.fn(async (promises: any) => {
+    if (Array.isArray(promises)) return Promise.all(promises);
+    if (typeof promises === "function") return promises(prismaMock);
+  });
+  return { prisma: prismaMock };
+});
 
 const userRepository = vi.mocked(prisma.user) as any;
 
@@ -90,7 +95,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "beatriz.costa@kria3d.com",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2025",
-        role: "Gerente",
+        role: "GERENTE",
       },
       authToken("GERENTE"),
     );
@@ -121,7 +126,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "joao.neves@kria3d.com",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2025",
-        role: "Operacional",
+        role: "OPERACIONAL",
       },
       authToken("GERENTE"),
     );
@@ -143,7 +148,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "beatriz.costa@kria3d.com",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2025",
-        role: "Gerente",
+        role: "GERENTE",
       },
       authToken("GERENTE"),
     );
@@ -160,7 +165,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "beatriz.costa@kria3d",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2025",
-        role: "Gerente",
+        role: "GERENTE",
       },
       authToken("GERENTE"),
     );
@@ -182,7 +187,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "admin@kria3d.com",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2025",
-        role: "Gerente",
+        role: "GERENTE",
       },
       authToken("GERENTE"),
     );
@@ -199,7 +204,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
         email: "beatriz.costa@kria3d.com",
         password: "Kr3D#2025",
         confirmation: "Kr3D#2026",
-        role: "Gerente",
+        role: "GERENTE",
       },
       authToken("GERENTE"),
     );

@@ -6,17 +6,26 @@ import { prisma } from "../../src/lib/clientPrisma";
 process.env.JWT_SECRET = "test-secret";
 process.env.JWT_EXPIRES_IN = "8h";
 
-vi.mock("../../src/lib/clientPrisma", () => ({
-  prisma: {
+vi.mock("../../src/lib/clientPrisma", () => {
+  const prismaMock: any = {
     order: {
       create: vi.fn(),
       findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
     },
     client: {
       create: vi.fn(),
     },
-  },
-}));
+  };
+  prismaMock.$transaction = vi.fn(async (promises: any) => {
+    if (Array.isArray(promises)) return Promise.all(promises);
+    if (typeof promises === "function") return promises(prismaMock);
+  });
+  return { prisma: prismaMock };
+});
 
 const orderRepository = vi.mocked(prisma.order) as any;
 const clientRepository = vi.mocked(prisma.client) as any;
@@ -227,6 +236,17 @@ describe("RF-04 — Remoção de Pedido no Kanban (Blackbox)", () => {
 
     // Simulamos que a exclusão é cancelada (o endpoint DELETE não é chamado),
     // logo podemos obter o pedido com sucesso e ele permanece inalterado.
+    orderRepository.findMany.mockResolvedValue([{
+      id: 1,
+      title: "Chaveiro personalizado logo Kria3D",
+      price: 45.0,
+      amount_paid: 0.0,
+      quantity: 3,
+      tagType: "PLA",
+      clientId: 1,
+    }]);
+    orderRepository.count.mockResolvedValue(1);
+
     const app = buildApp({ logger: false });
     try {
       const response = await app.inject({
