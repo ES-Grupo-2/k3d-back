@@ -364,5 +364,20 @@ describe("tags routes", () => {
       expect(response.statusCode).toBe(403);
       expect(tagRepository.update).not.toHaveBeenCalled();
     });
+
+    it("returns 500 when update fails with a non-unique-constraint error", async () => {
+      tagRepository.findUnique.mockResolvedValue(baseTag);
+      tagRepository.update.mockRejectedValue(new Error("Database connection lost"));
+
+      const response = await inject(
+        "PATCH",
+        "/tags/1",
+        authToken("GERENTE"),
+        { type: "RESINA" },
+      );
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({ error: "Erro interno do servidor" });
+    });
   });
 });

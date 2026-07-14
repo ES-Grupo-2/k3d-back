@@ -124,6 +124,22 @@ describe("clients routes", () => {
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject([{ id: 1, name: "Acme Corp" }]);
     });
+
+    it("returns 200 and filters clients by search query", async () => {
+      clientRepository.findMany.mockResolvedValue([baseClient]);
+
+      const response = await inject("GET", "/clients?search=Acme", authToken());
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject([{ id: 1, name: "Acme Corp" }]);
+      expect(clientRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            name: { contains: "Acme", mode: "insensitive" },
+          },
+        }),
+      );
+    });
   });
 
   // ── GET /with-orders ───────────────────────────────────────────────────────
@@ -147,6 +163,26 @@ describe("clients routes", () => {
 
       expect(response.statusCode).toBe(401);
       expect(clientRepository.findMany).not.toHaveBeenCalled();
+    });
+
+    it("returns 200 and filters clients with orders by search query", async () => {
+      clientRepository.findMany.mockResolvedValue([
+        { ...baseClient, orders: [baseOrder] },
+      ]);
+
+      const response = await inject("GET", "/clients/with-orders?search=Acme", authToken());
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject([
+        { id: 1, name: "Acme Corp", orders: [{ id: 10 }] },
+      ]);
+      expect(clientRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            name: { contains: "Acme", mode: "insensitive" },
+          },
+        }),
+      );
     });
   });
 

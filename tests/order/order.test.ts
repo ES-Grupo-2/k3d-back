@@ -346,4 +346,189 @@ describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
       );
     });
 
-  });   }); 
+  });
+
+  describe("PATCH /orders/:id/move with invalid ID", () => {
+    it("returns 400 when order ID is not numeric", async () => {
+      const response = await injectRequest(
+        "PATCH",
+        "/orders/abc/move",
+        { destinationSection: "FAZENDO" },
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "ID do pedido inválido." });
+    });
+
+    it("returns 400 when order is not found", async () => {
+      orderRepository.findUnique.mockResolvedValue(null);
+
+      const response = await injectRequest(
+        "PATCH",
+        "/orders/999/move",
+        { destinationSection: "FAZENDO" },
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toHaveProperty("error");
+    });
+
+    it("returns 400 when moveOrder throws a generic error", async () => {
+      orderRepository.findUnique.mockResolvedValue(baseOrder);
+      orderRepository.update.mockRejectedValue(new Error("Unexpected failure"));
+
+      const response = await injectRequest(
+        "PATCH",
+        "/orders/1/move",
+        { destinationSection: "FAZENDO" },
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Unexpected failure" });
+    });
+  });
+
+  describe("PUT /orders/:id with invalid ID", () => {
+    it("returns 400 when order ID is not numeric", async () => {
+      const response = await injectRequest(
+        "PUT",
+        "/orders/abc",
+        { title: "Test" },
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "ID do pedido inválido." });
+    });
+
+    it("returns 400 when order is not found", async () => {
+      orderRepository.findUnique.mockResolvedValue(null);
+
+      const response = await injectRequest(
+        "PUT",
+        "/orders/999",
+        { title: "Test" },
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toHaveProperty("error");
+    });
+
+    it("returns 400 when updateOrder throws a generic error", async () => {
+      orderRepository.findUnique.mockResolvedValue(baseOrder);
+      orderRepository.update.mockRejectedValue(new Error("Unexpected failure"));
+
+      const response = await injectRequest(
+        "PUT",
+        "/orders/1",
+        { title: "Test" },
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Unexpected failure" });
+    });
+  });
+
+  describe("DELETE /orders/:id with invalid ID", () => {
+    it("returns 400 when order ID is not numeric", async () => {
+      const response = await injectRequest(
+        "DELETE",
+        "/orders/abc",
+        undefined,
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "ID do pedido inválido." });
+    });
+
+    it("returns 400 when order is not found", async () => {
+      orderRepository.findUnique.mockResolvedValue(null);
+
+      const response = await injectRequest(
+        "DELETE",
+        "/orders/999",
+        undefined,
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toHaveProperty("error");
+    });
+
+    it("returns 400 when deleteOrder throws a generic error", async () => {
+      orderRepository.findUnique.mockResolvedValue(baseOrder);
+      orderRepository.delete.mockRejectedValue(new Error("Unexpected failure"));
+
+      const response = await injectRequest(
+        "DELETE",
+        "/orders/1",
+        undefined,
+        authHeaderToken("GERENTE")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Unexpected failure" });
+    });
+  });
+
+  describe("GET /orders with different filter types", () => {
+    it("filters by title using case-insensitive contains", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      await injectRequest(
+        "GET",
+        "/orders?title=suporte",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            title: { contains: "suporte", mode: "insensitive" },
+          },
+        })
+      );
+    });
+
+    it("filters by non-title string field with exact match", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      await injectRequest(
+        "GET",
+        "/orders?section=PENDENTE",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { section: "PENDENTE" },
+        })
+      );
+    });
+
+    it("returns 400 when getOrders throws a generic error", async () => {
+      orderRepository.findMany.mockRejectedValue(new Error("Unexpected failure"));
+      orderRepository.count.mockRejectedValue(new Error("Unexpected failure"));
+
+      const response = await injectRequest(
+        "GET",
+        "/orders",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Unexpected failure" });
+    });
+  });
+});
