@@ -1,45 +1,66 @@
 import { prisma }            from "../../lib/clientPrisma";
 import { AppError }          from "../../utils/errors";
 import { CreateClientInput, UpdateClientInput } from "./clients.types";
+import { paginatePrisma } from "../../utils/pagination";
 
 export class ClientsService {
 
-    static async list(search?: string) {
-        return prisma.client.findMany({
-        where: search
-            ? {
-                name: {
-                contains: search,
-                mode: "insensitive",
+    static async list(page: number = 1, pageSize: number = 10, search?: string) {
+        return paginatePrisma(
+            prisma.client,
+            {
+                where: search
+                    ? {
+                        name: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                        },
+                    }
+                    : undefined,
+                orderBy: {
+                    name: "asc" as const,
                 },
-            }
-            : undefined,
-
-        orderBy: {
-            name: "asc",
-        },
-        });
+            },
+            { page, pageSize }
+        );
     }
 
-    static async listWithOrders(search?: string) {
-        return prisma.client.findMany({
-            where: search
-                ? {
-                    name: {
-                    contains: search,
-                    mode: "insensitive",
-                    },
-                }
-                : undefined,
-
+    static async listWithOrders(page: number = 1, pageSize: number = 10, search?: string) {
+        const paginatedResult = await paginatePrisma(
+            prisma.client,
+            {
+                where: search
+                    ? {
+                        name: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                        },
+                    }
+                    : undefined,
                 include: {
-                    orders: true,
+                    _count: {
+                        select: {
+                            orders: true,
+                        },
+                    },
                 },
-
                 orderBy: {
-                    name: "asc",
+                    name: "asc" as const,
                 },
-            });
+            },
+            { page, pageSize }
+        );
+
+        return {
+            ...paginatedResult,
+            data: paginatedResult.data.map((client: any) => ({
+                id: client.id,
+                name: client.name,
+                phone: client.phone,
+                email: client.email,
+                ordersCount: client._count?.orders ?? 0,
+            })),
+        };
   }
   
     static async getById(id: number) {
@@ -82,8 +103,22 @@ export class ClientsService {
         }
 
   static async delete(id: number) {
-        const client = await ClientsService.getByIdWithOrders(id);
-        if (client.orders.length > 0) {
+        const client = await prisma.client.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: {
+                        orders: true,
+                    },
+                },
+            },
+        });
+
+        if (!client) {
+            throw new AppError("Cliente não encontrado", 404);
+        }
+
+        if (client._count.orders > 0) {
             throw new AppError(
             "Não é possível remover um cliente com pedidos vinculados",
             400
