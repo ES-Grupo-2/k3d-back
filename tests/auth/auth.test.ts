@@ -60,8 +60,8 @@ async function injectPost(
       payload,
       headers: token
         ? {
-            authorization: `Bearer ${token}`,
-          }
+          authorization: `Bearer ${token}`,
+        }
         : undefined,
     });
 

@@ -18,6 +18,7 @@ vi.mock("../../src/lib/clientPrisma", () => {
     },
     client: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
   };
   prismaMock.$transaction = vi.fn(async (promises: any) => {
@@ -95,6 +96,7 @@ afterEach(() => {
 
 describe("RF-03 — Criação de Pedido no Kanban (Blackbox)", () => {
   it("TC-RF03-01 - Criar pedido preenchendo todos os campos com dados válidos", async () => {
+    clientRepository.findFirst.mockResolvedValue(null);
     clientRepository.create.mockResolvedValue({
       id: 1,
       name: "Renata Souza Lima",
@@ -183,6 +185,7 @@ describe("RF-03 — Criação de Pedido no Kanban (Blackbox)", () => {
   });
 
   it("TC-RF03-04 - Criar cliente com e-mail do cliente em branco (campo opcional)", async () => {
+    clientRepository.findFirst.mockResolvedValue(null);
     clientRepository.create.mockResolvedValue({
       id: 1,
       name: "Renata Souza Lima",

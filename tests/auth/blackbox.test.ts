@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../../src/app";
 import { prisma } from "../../src/lib/clientPrisma";
 
@@ -59,8 +59,8 @@ async function injectPost(
       payload,
       headers: token
         ? {
-            authorization: `Bearer ${token}`,
-          }
+          authorization: `Bearer ${token}`,
+        }
         : undefined,
     });
     return response as any;

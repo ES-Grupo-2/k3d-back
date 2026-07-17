@@ -8,6 +8,7 @@ vi.mock("../../src/lib/clientPrisma", () => ({
     client: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -266,6 +267,7 @@ describe("clients routes", () => {
   describe("POST /clients", () => {
     it("returns 201 and the created client", async () => {
 
+      clientRepository.findFirst.mockResolvedValue(null);
       clientRepository.create.mockResolvedValue({
         ...baseClient,
         id: 42,

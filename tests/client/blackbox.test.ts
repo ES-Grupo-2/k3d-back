@@ -148,6 +148,7 @@ describe("RF-15 — Criação de Clientes (Blackbox)", () => {
   });
 
   it("TC-RF15-05 - Cadastrar cliente omitindo e-mail (campo opcional)", async () => {
+    clientRepository.findFirst.mockResolvedValue(null);
     clientRepository.create.mockResolvedValue({
       id: 3,
       name: "Carlos Eduardo Ferreira",
