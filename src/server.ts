@@ -1,5 +1,5 @@
 import { buildApp } from "./app";
-import './config/env';
+import "./config/env";
 
 const app = buildApp({
   logger: true,

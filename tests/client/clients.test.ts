@@ -8,6 +8,7 @@ vi.mock("../../src/lib/clientPrisma", () => ({
     client: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -155,6 +156,32 @@ describe("clients routes", () => {
         },
       });
     });
+
+    it("returns 200 and filters clients by search query", async () => {
+      clientRepository.findMany.mockResolvedValue([baseClient]);
+      clientRepository.count.mockResolvedValue(1);
+
+      const response = await inject("GET", "/clients?search=Acme", authToken());
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp" }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
+      expect(clientRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            name: { contains: "Acme", mode: "insensitive" },
+          },
+        }),
+      );
+    });
   });
 
   // ── GET /with-orders ───────────────────────────────────────────────────────
@@ -186,6 +213,34 @@ describe("clients routes", () => {
 
       expect(response.statusCode).toBe(401);
       expect(clientRepository.findMany).not.toHaveBeenCalled();
+    });
+
+    it("returns 200 and filters clients with orders by search query", async () => {
+      clientRepository.findMany.mockResolvedValue([
+        { ...baseClient, _count: { orders: 1 } },
+      ]);
+      clientRepository.count.mockResolvedValue(1);
+
+      const response = await inject("GET", "/clients/with-orders?search=Acme", authToken());
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp", ordersCount: 1 }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
+      expect(clientRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            name: { contains: "Acme", mode: "insensitive" },
+          },
+        }),
+      );
     });
   });
 
@@ -269,6 +324,7 @@ describe("clients routes", () => {
   describe("POST /clients", () => {
     it("returns 201 and the created client", async () => {
 
+      clientRepository.findFirst.mockResolvedValue(null);
       clientRepository.create.mockResolvedValue({
         ...baseClient,
         id: 42,

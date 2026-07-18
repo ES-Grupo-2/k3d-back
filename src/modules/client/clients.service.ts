@@ -91,6 +91,14 @@ export class ClientsService {
     }
 
   static async create(data: CreateClientInput) {
+        if (data.phone) {
+            const existing = await prisma.client.findFirst({
+                where: { phone: data.phone }
+            });
+            if (existing) {
+                throw new AppError("Já existe um cliente cadastrado com este telefone.", 409);
+            }
+        }
         return prisma.client.create({ data });
     }
 

@@ -1,4 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
+import path from "path";
 import { Readable } from "stream";
 import { FilesService } from "./files.service";
 import { FastifyUploadFile } from "./files.types";
@@ -15,7 +16,23 @@ export class FilesController {
                 return res.status(400).send({ error: "Nenhum arquivo foi enviado." });
             }
 
-            const result = await filesService.uploadFile(data as unknown as FastifyUploadFile);
+            const allowedExtensions = [".stl", ".gcode", ".3mf", ".png", ".jpg", ".jpeg"];
+            const fileExt = path.extname(data.filename).toLowerCase();
+            if (!allowedExtensions.includes(fileExt)) {
+                return res.status(400).send({
+                    error: `Formato de arquivo não suportado: ${fileExt}. Formatos aceitos: ${allowedExtensions.join(", ")}`
+                });
+            }
+
+            const MAX_SIZE = 50 * 1024 * 1024;
+            const contentLength = Number(req.headers["content-length"]);
+            if (contentLength > MAX_SIZE) {
+                return res.status(400).send({
+                    error: `Arquivo excede o limite de 50MB.`
+                });
+            }
+
+            const result = await filesService.uploadFile(data);
 
             return res.status(201).send(result);
         } catch (error) {

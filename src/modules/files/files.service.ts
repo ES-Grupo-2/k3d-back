@@ -23,7 +23,7 @@ export class FilesService {
                 },
             });
 
-            console.log("Enviando stream para o MinIO...")
+            console.log("Enviando stream para o MinIO...");
             await uploadManager.done();
             console.log("Upload concluído com sucesso!");
 

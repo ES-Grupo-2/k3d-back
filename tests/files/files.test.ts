@@ -38,7 +38,7 @@ async function injectMultipartFile(url: string, token?: string) {
     const boundary = "----VitestBoundary12345";
     const payload = [
         `--${boundary}`,
-        'Content-Disposition: form-data; name="file"; filename="foto-teste.png"',
+        "Content-Disposition: form-data; name=\"file\"; filename=\"foto-teste.png\"",
         "Content-Type: image/png",
         "",
         "conteudo_binario_fake",
@@ -172,6 +172,54 @@ describe("files routes", () => {
             expect(response.statusCode).toBe(200);
             expect(response.json()).toHaveProperty("message");
             expect(mockS3Send).toHaveBeenCalledTimes(1);
+        });
+
+        it("returns 500 when S3 delete fails", async () => {
+            mockS3Send.mockRejectedValue(new Error("S3 delete failed"));
+
+            const response = await injectStandardRequest(
+                "DELETE",
+                "/files/12345-foto.png",
+                authToken("GERENTE")
+            );
+
+            expect(response.statusCode).toBe(500);
+            expect(response.json()).toEqual({ error: "Erro interno ao deletar o arquivo." });
+        });
+    });
+
+    describe("POST /files without file", () => {
+        it("returns 500 when request is not multipart", async () => {
+            const app = buildApp({ logger: false });
+            try {
+                const response = await app.inject({
+                    method: "POST",
+                    url: "/files",
+                    payload: {},
+                    headers: {
+                        authorization: `Bearer ${authToken("GERENTE")}`,
+                    },
+                });
+
+                expect(response.statusCode).toBe(500);
+            } finally {
+                await app.close();
+            }
+        });
+    });
+
+    describe("GET /files/:fileName with empty body", () => {
+        it("returns 404 when S3 returns empty body", async () => {
+            mockS3Send.mockResolvedValue({ Body: null, ContentType: null });
+
+            const response = await injectStandardRequest(
+                "GET",
+                "/files/arquivo-vazio.png",
+                authToken("OPERACIONAL")
+            );
+
+            expect(response.statusCode).toBe(404);
+            expect(response.json()).toEqual({ error: "Arquivo não encontrado." });
         });
     });
 });

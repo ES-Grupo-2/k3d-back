@@ -7,6 +7,7 @@ process.env.JWT_EXPIRES_IN = "8h";
 
 import { buildApp } from "../../src/app";
 import { prisma } from "../../src/lib/clientPrisma";
+import { checkRole } from "../../src/middlewares/rbac";
 
 vi.mock("../../src/lib/clientPrisma", () => ({
   prisma: {
@@ -59,8 +60,8 @@ async function injectPost(
       payload,
       headers: token
         ? {
-            authorization: `Bearer ${token}`,
-          }
+          authorization: `Bearer ${token}`,
+        }
         : undefined,
     });
 
@@ -246,7 +247,7 @@ describe("auth routes", () => {
   });
 
   describe("POST /auth/login", () => {
-    it("returns 200, a JWT token, and user data for valid credentials", async () => {
+    it("TC-RF02-01 / TC-RF02-02 - returns 200, a JWT token, and user data for valid credentials", async () => {
       const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,
@@ -279,7 +280,7 @@ describe("auth routes", () => {
       });
     });
 
-    it("returns 401 for unknown user", async () => {
+    it("TC-RF02-04 - returns 401 for unknown user", async () => {
       userRepository.findUnique.mockResolvedValue(null);
 
       const response = await injectPost("/auth/login", {
@@ -293,7 +294,7 @@ describe("auth routes", () => {
       });
     });
 
-    it("returns 401 for wrong password", async () => {
+    it("TC-RF02-03 - returns 401 for wrong password", async () => {
       const passwordHash = await bcrypt.hash("password123", 10);
       userRepository.findUnique.mockResolvedValue({
         ...baseUser,
@@ -321,6 +322,86 @@ describe("auth routes", () => {
       expect(response.json()).toMatchObject({
         error: "Dados inválidos",
       });
+    });
+
+    it("returns 500 when an unexpected error occurs", async () => {
+      userRepository.findUnique.mockRejectedValue(new Error("DB connection lost"));
+
+      const response = await injectPost("/auth/login", {
+        email: "user@email.com",
+        password: "password123",
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({
+        error: "Erro interno do servidor",
+      });
+    });
+
+    it("returns 500 when JWT_SECRET is not configured", async () => {
+      const originalSecret = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+
+      const passwordHash = await bcrypt.hash("password123", 10);
+      userRepository.findUnique.mockResolvedValue({
+        ...baseUser,
+        password_hash: passwordHash,
+      });
+
+      const response = await injectPost("/auth/login", {
+        email: "user@email.com",
+        password: "password123",
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({
+        error: "Erro interno do servidor",
+      });
+
+      process.env.JWT_SECRET = originalSecret;
+    });
+  });
+
+  describe("POST /auth/register with missing JWT_SECRET", () => {
+    it("returns 500 when JWT_SECRET is not configured", async () => {
+      const token = jwt.sign(
+        { sub: "99", email: "manager@email.com", role: "GERENTE" },
+        "test-secret",
+        { expiresIn: "8h" },
+      );
+
+      const originalSecret = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+
+      const response = await injectPost(
+        "/auth/register",
+        {
+          name: "New User",
+          email: "new@email.com",
+          password: "password123",
+          role: "GERENTE",
+        },
+        token,
+      );
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({
+        error: "Erro interno do servidor",
+      });
+
+      process.env.JWT_SECRET = originalSecret;
+    });
+  });
+
+  describe("rbac middleware", () => {
+    it("throws 401 when request.user is not set", async () => {
+      const roleGuard = checkRole(["GERENTE"]);
+      const mockRequest = { user: undefined } as any;
+      const mockReply = {} as any;
+
+      await expect(roleGuard(mockRequest, mockReply)).rejects.toThrow(
+        "Token não informado",
+      );
     });
   });
 });
