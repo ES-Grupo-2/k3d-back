@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../../src/app";
 import { prisma } from "../../src/lib/clientPrisma";
 
@@ -12,7 +12,7 @@ vi.mock("../../src/lib/clientPrisma", () => ({
       create: vi.fn(),
       findUnique: vi.fn(),
       findFirst: vi.fn(),
-      delete: vi.fn(),
+      delete: vi.fn().mockResolvedValue({ _count: { orders: 1 } }),
     },
   },
 }));
@@ -176,7 +176,7 @@ describe("RF-16 — Remoção de Clientes (Blackbox)", () => {
       id: 1,
       name: "Carlos Eduardo Ferreira",
       phone: "(83) 98888-4455",
-      orders: [{ id: 10 }],
+      _count: { orders: 1 },
     });
 
     const response = await injectDelete("/clients/1", authToken("OPERACIONAL"));

@@ -12,6 +12,7 @@ vi.mock("../../src/lib/clientPrisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -84,21 +85,41 @@ describe("clients routes", () => {
   describe("GET /clients", () => {
     it("returns 200 and a list of clients", async () => {
       clientRepository.findMany.mockResolvedValue([baseClient]);
+      clientRepository.count.mockResolvedValue(1);
 
       const response = await inject("GET", "/clients", authToken());
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject([{ id: 1, name: "Acme Corp" }]);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp" }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
       expect(clientRepository.findMany).toHaveBeenCalledOnce();
     });
 
     it("returns 200 and an empty list when there are no clients", async () => {
       clientRepository.findMany.mockResolvedValue([]);
+      clientRepository.count.mockResolvedValue(0);
 
       const response = await inject("GET", "/clients", authToken());
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual([]);
+      expect(response.json()).toEqual({
+        data: [],
+        meta: {
+          totalItems: 0,
+          itemCount: 0,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 0,
+        },
+      });
     });
 
     it("returns 401 when token is missing", async () => {
@@ -119,20 +140,40 @@ describe("clients routes", () => {
 
     it("returns 200 for OPERACIONAL role (also allowed)", async () => {
       clientRepository.findMany.mockResolvedValue([baseClient]);
+      clientRepository.count.mockResolvedValue(1);
 
       const response = await inject("GET", "/clients", authToken("OPERACIONAL"));
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject([{ id: 1, name: "Acme Corp" }]);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp" }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
     });
 
     it("returns 200 and filters clients by search query", async () => {
       clientRepository.findMany.mockResolvedValue([baseClient]);
+      clientRepository.count.mockResolvedValue(1);
 
       const response = await inject("GET", "/clients?search=Acme", authToken());
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject([{ id: 1, name: "Acme Corp" }]);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp" }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
       expect(clientRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
@@ -146,17 +187,25 @@ describe("clients routes", () => {
   // ── GET /with-orders ───────────────────────────────────────────────────────
 
   describe("GET /clients/with-orders", () => {
-    it("returns 200 and clients with their orders", async () => {
+    it("returns 200 and clients with their orders count", async () => {
       clientRepository.findMany.mockResolvedValue([
-        { ...baseClient, orders: [baseOrder] },
+        { ...baseClient, _count: { orders: 1 } },
       ]);
+      clientRepository.count.mockResolvedValue(1);
 
       const response = await inject("GET", "/clients/with-orders", authToken());
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject([
-        { id: 1, name: "Acme Corp", orders: [{ id: 10 }] },
-      ]);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp", ordersCount: 1 }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
     });
 
     it("returns 401 when token is missing", async () => {
@@ -168,15 +217,23 @@ describe("clients routes", () => {
 
     it("returns 200 and filters clients with orders by search query", async () => {
       clientRepository.findMany.mockResolvedValue([
-        { ...baseClient, orders: [baseOrder] },
+        { ...baseClient, _count: { orders: 1 } },
       ]);
+      clientRepository.count.mockResolvedValue(1);
 
       const response = await inject("GET", "/clients/with-orders?search=Acme", authToken());
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toMatchObject([
-        { id: 1, name: "Acme Corp", orders: [{ id: 10 }] },
-      ]);
+      expect(response.json()).toMatchObject({
+        data: [{ id: 1, name: "Acme Corp", ordersCount: 1 }],
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          pageSize: 10,
+          currentPage: 1,
+          totalPages: 1,
+        },
+      });
       expect(clientRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
@@ -402,7 +459,7 @@ describe("clients routes", () => {
     it("returns 200 and a success message when client has no orders", async () => {
       clientRepository.findUnique.mockResolvedValue({
         ...baseClient,
-        orders: [],
+        _count: { orders: 0 },
       });
       clientRepository.delete.mockResolvedValue(baseClient);
 
@@ -420,7 +477,7 @@ describe("clients routes", () => {
     it("returns 400 when client has linked orders", async () => {
       clientRepository.findUnique.mockResolvedValue({
         ...baseClient,
-        orders: [baseOrder],
+        _count: { orders: 1 },
       });
 
       const response = await inject("DELETE", "/clients/1", authToken());
