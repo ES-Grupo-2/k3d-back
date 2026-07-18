@@ -72,8 +72,8 @@ export class OrderController {
 
     async get(request: FastifyRequest, reply: FastifyReply) {
         try {
-            const { page, limit, ...filters } = getOrderQuerySchema.parse(request.query);            
-            const orders = await orderService.getOrders(page, limit, filters);
+            const { page, pageSize, ...filters } = getOrderQuerySchema.parse(request.query);            
+            const orders = await orderService.getOrders(page, pageSize, filters);
             return reply.status(200).send(orders);
         } catch (error: any) {
             return reply.status(400).send({ error: error.message });
