@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { paginationQuerySchema } from "../../utils/pagination";
+
 export const createOrderSchema = z.object({
   title: z.string().trim().min(1, "O título do pedido é obrigatório"),
   archive: z.string().trim().optional(),
@@ -22,10 +24,7 @@ export const moveOrderSchema = z.object({
   }),
 });
 
-export const getOrderQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().default(10),
-
+export const getOrderQuerySchema = paginationQuerySchema.extend({
   title: z.string().trim().optional().or(z.literal("")),
   section: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"]).optional().or(z.literal("")),
   status: z.string().trim().optional().or(z.literal("")),

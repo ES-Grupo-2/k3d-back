@@ -183,7 +183,7 @@ describe("order routes (Kanban)", () => {
 
       const response = await injectRequest(
         "GET",
-        "/orders?page=1&limit=10&section=PENDENTE", // Todos os campos existem no Zod Schema
+        "/orders?page=1&pageSize=10&section=PENDENTE", // Todos os campos existem no Zod Schema
         undefined,
         authHeaderToken("OPERACIONAL")
       );
@@ -196,7 +196,7 @@ describe("order routes (Kanban)", () => {
       expect(body.meta).toMatchObject({
         totalItems: 1,
         itemCount: 1,
-        itemsPerPage: 10,
+        pageSize: 10,
         currentPage: 1,
         totalPages: 1,
       });
@@ -263,7 +263,7 @@ describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
 
       const response = await injectRequest(
         "GET",
-        "/orders?page=1&limit=10&section=PENDENTE",
+        "/orders?page=1&pageSize=10&section=PENDENTE",
         undefined,
         authHeaderToken("OPERACIONAL")
       );
@@ -276,7 +276,7 @@ describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
       expect(body.meta).toMatchObject({
         totalItems: 1,
         itemCount: 1,
-        itemsPerPage: 10,
+        pageSize: 10,
         currentPage: 1,
         totalPages: 1,
       });

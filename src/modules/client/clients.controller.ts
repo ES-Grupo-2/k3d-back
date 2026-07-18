@@ -1,22 +1,20 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { createClientSchema, updateClientSchema } from "./clients.types";
+import { createClientSchema, updateClientSchema, listClientsQuerySchema } from "./clients.types";
 import { ClientsService } from "./clients.service";
 
 export class ClientsController {
     
     static async list(request: FastifyRequest, reply: FastifyReply) {
-        const { search } = request.query as { search?: string };
-        const clients = await ClientsService.list(search);
+        const { page, pageSize, search } = listClientsQuerySchema.parse(request.query);
+        const clients = await ClientsService.list(page, pageSize, search);
         return reply.send(clients);
     }
     static async listWithOrders(
         request: FastifyRequest,
         reply: FastifyReply
         ) {
-        const { search } = request.query as {
-            search?: string;
-        };
-        const clients = await ClientsService.listWithOrders(search);
+        const { page, pageSize, search } = listClientsQuerySchema.parse(request.query);
+        const clients = await ClientsService.listWithOrders(page, pageSize, search);
 
         return reply.send(clients);
     }

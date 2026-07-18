@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../../src/app";
 import { prisma } from "../../src/lib/clientPrisma";
-import { Prisma } from "../../src/generated/prisma";
+import { Prisma } from "@prisma/client";
 
 vi.mock("../../src/lib/clientPrisma", () => ({
   prisma: {
