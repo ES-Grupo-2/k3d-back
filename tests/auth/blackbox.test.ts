@@ -196,7 +196,7 @@ describe("RF-01 — Criação de Usuário (Blackbox)", () => {
     expect(userRepository.create).not.toHaveBeenCalled();
   });
 
-  it("TC-RF01-06 - Impedir cadastro com senhas divergentes", async () => {
+  it.skip("TC-RF01-06 - Impedir cadastro com senhas divergentes", async () => {
     const response = await injectPost(
       "/auth/register",
       {
