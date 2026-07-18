@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client;
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/clientPrisma";
 import { AppError } from "../../utils/errors";
 import { CreateTagInput, TagResponse, UpdateTagInput } from "./tags.types";
