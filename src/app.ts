@@ -1,4 +1,5 @@
 import multipart from "@fastify/multipart";
+import cors from "@fastify/cors";
 import fastify, { FastifyServerOptions } from "fastify";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { clientsRoutes } from "./modules/client/clients.routes";
@@ -12,6 +13,11 @@ import { filesRoutes } from "./modules/files/files.routes";
 
 export function buildApp(options: FastifyServerOptions = { logger: true }) {
   const app = fastify(options);
+
+  // Libera o front (produção e dev local) a chamar a API pelo navegador.
+  app.register(cors, {
+    origin: ["https://k3d.eyepleasure.com.br", "http://localhost:3000"],
+  });
 
   app.setErrorHandler(errorHandler);
   app.register(multipart);
