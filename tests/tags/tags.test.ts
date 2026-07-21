@@ -19,7 +19,7 @@ const tagRepository = vi.mocked(prisma.tag);
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const baseTag = { id: 1, type: "PLA" };
+const baseTag = { id: 1, type: "PLA", color: "#6366f1" };
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ describe("tags routes", () => {
   describe("POST /tags", () => {
     it("returns 201 and the created tag", async () => {
       tagRepository.findUnique.mockResolvedValue(null);
-      tagRepository.create.mockResolvedValue({ id: 3, type: "PETG" });
+      tagRepository.create.mockResolvedValue({ id: 3, type: "PETG", color: "#6366f1" });
 
       const response = await inject(
         "POST",
@@ -177,9 +177,9 @@ describe("tags routes", () => {
       );
 
       expect(response.statusCode).toBe(201);
-      expect(response.json()).toMatchObject({ id: 3, type: "PETG" });
+      expect(response.json()).toMatchObject({ id: 3, type: "PETG", color: "#6366f1" });
       expect(tagRepository.create).toHaveBeenCalledWith({
-        data: { type: "PETG" },
+        data: { type: "PETG", color: "#6366f1" },
       });
     });
 
