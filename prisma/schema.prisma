@@ -23,6 +23,7 @@ model User {
 model Tag {
   id     Int     @id @default(autoincrement())
   type   String  @unique
+  color String @default("#6366f1")
   orders Order[]
 
   @@map("tags")
