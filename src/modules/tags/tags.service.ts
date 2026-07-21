@@ -14,7 +14,10 @@ export class TagsService {
     }
 
     return prisma.tag.create({
-      data: { type: data.type },
+      data: {
+         type: data.type,
+         color: data.color ?? "#6366f1" 
+        },
     });
   }
 
@@ -52,7 +55,10 @@ export class TagsService {
     try {
       return await prisma.tag.update({
         where: { id },
-        data: { type: data.type },
+          data: {
+          ...(data.type  && { type:  data.type }),
+          ...(data.color && { color: data.color }),
+        },
       });
     } catch (error) {
       if (
