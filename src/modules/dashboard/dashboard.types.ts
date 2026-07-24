@@ -42,3 +42,25 @@ export type DashboardOperacionalResponse = {
   tags: TagCount[];
   totalPedidos: number;
 };
+
+
+export const receitaDiariaQuerySchema = z.object({
+  periodo: periodoSchema.default("MENSAL"),
+  ref: z.string().optional(),
+  tagType: z.string().optional(),
+});
+
+export type ReceitaDiariaQuery = z.infer<typeof receitaDiariaQuerySchema>;
+
+export type ReceitaPorDia = {
+  data: string; // YYYY-MM-DD
+  receitaTotal: number;
+  totalPedidos: number;
+};
+
+export type DashboardReceitaDiariaResponse = {
+  periodo: Periodo;
+  dataInicio: string;
+  dataFim: string;
+  dias: ReceitaPorDia[];
+};

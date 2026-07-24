@@ -15,4 +15,10 @@ export async function dashboardRoutes(app: FastifyInstance) {
     { preHandler: [verifyJWT, checkRole(["OPERACIONAL", "GERENTE"])] },
     DashboardController.operacional,
   );
+
+  app.get(
+  "/financeiro/receita-diaria",
+  { preHandler: [verifyJWT, checkRole(["GERENTE"])] },
+  DashboardController.receitaDiaria,
+);
 }
