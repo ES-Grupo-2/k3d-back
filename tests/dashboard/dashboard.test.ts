@@ -9,10 +9,13 @@ vi.mock("../../src/lib/clientPrisma", () => ({
       aggregate: vi.fn(),
       groupBy: vi.fn(),
     },
+    $queryRaw: vi.fn(),
   },
 }));
 
 const orderRepository = vi.mocked(prisma.order);
+const queryRawMock = vi.mocked(prisma.$queryRaw);
+
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -278,4 +281,54 @@ describe("dashboard routes", () => {
       expect(orderRepository.groupBy).not.toHaveBeenCalled();
     });
   });
+
+
+  describe("GET /financeiro/receita-diaria", () => {
+
+
+    it("uses a custom date range when ref is provided", async () => {
+      queryRawMock.mockResolvedValue([]);
+
+      const response = await inject(
+        "/dashboard/financeiro/receita-diaria?periodo=SEMANAL&ref=2026-01-01,2026-01-07",
+        authToken("GERENTE"),
+      );
+
+      expect(response.statusCode).toBe(200);
+      expect(queryRawMock).toHaveBeenCalledOnce();
+    });
+
+    it("returns 400 for an invalid periodo value", async () => {
+      const response = await inject(
+        "/dashboard/financeiro/receita-diaria?periodo=ANUAL",
+        authToken("GERENTE"),
+      );
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: "Dados inválidos" });
+      expect(queryRawMock).not.toHaveBeenCalled();
+    });
+
+    it("returns 401 when token is missing", async () => {
+      const response = await inject("/dashboard/financeiro/receita-diaria");
+
+      expect(response.statusCode).toBe(401);
+      expect(queryRawMock).not.toHaveBeenCalled();
+    });
+
+    it("returns 403 for OPERACIONAL role (not allowed on receita-diaria)", async () => {
+      const response = await inject("/dashboard/financeiro/receita-diaria", authToken("OPERACIONAL"));
+
+      expect(response.statusCode).toBe(403);
+      expect(queryRawMock).not.toHaveBeenCalled();
+    });
+
+    it("returns 401 for an unrecognized role", async () => {
+      const response = await inject("/dashboard/financeiro/receita-diaria", authToken("FINANCEIRO"));
+
+      expect(response.statusCode).toBe(401);
+      expect(queryRawMock).not.toHaveBeenCalled();
+    });
+  });
+
 });
