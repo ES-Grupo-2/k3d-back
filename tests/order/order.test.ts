@@ -478,7 +478,7 @@ describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
   });
 
   describe("GET /orders with different filter types", () => {
-    it("filters by title using case-insensitive contains", async () => {
+    it("filters by title using case-insensitive contains including client name and order ID", async () => {
       orderRepository.findMany.mockResolvedValue([baseOrder]);
       orderRepository.count.mockResolvedValue(1);
 
@@ -492,8 +492,56 @@ describe("GET /orders (Paginação e Filtros Dinâmicos)", () => {
       expect(orderRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            title: { contains: "suporte", mode: "insensitive" },
+            OR: [
+              { title: { contains: "suporte", mode: "insensitive" } },
+              { client: { name: { contains: "suporte", mode: "insensitive" } } },
+            ],
           },
+        })
+      );
+    });
+
+    it("filters by numeric ID as well when title query is an integer string", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      await injectRequest(
+        "GET",
+        "/orders?title=42",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { title: { contains: "42", mode: "insensitive" } },
+              { client: { name: { contains: "42", mode: "insensitive" } } },
+              { id: 42 },
+            ],
+          },
+        })
+      );
+    });
+
+
+    it("filters by payment_method parameter", async () => {
+      orderRepository.findMany.mockResolvedValue([baseOrder]);
+      orderRepository.count.mockResolvedValue(1);
+
+      await injectRequest(
+        "GET",
+        "/orders?payment_method=PIX",
+        undefined,
+        authHeaderToken("OPERACIONAL")
+      );
+
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            payment_method: { in: expect.arrayContaining(["PIX"]) },
+          }),
         })
       );
     });
