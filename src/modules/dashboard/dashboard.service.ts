@@ -97,7 +97,7 @@ export class DashboardService {
         DATE("created_at") AS dia,
         COALESCE(SUM("amount_paid"), 0) AS receita_total,
         COUNT("id") AS total_pedidos
-      FROM "Order"
+      FROM "orders"
       WHERE "created_at" >= ${start}
         AND "created_at" <= ${end}
         ${tagType ? Prisma.sql`AND "tagType" = ${tagType}` : Prisma.empty}
