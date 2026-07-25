@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { financeiroQuerySchema, operacionalQuerySchema } from "./dashboard.types";
+import { financeiroQuerySchema, operacionalQuerySchema, receitaDiariaQuerySchema } from "./dashboard.types";
 import { DashboardService } from "./dashboard.service";
 
 export class DashboardController {
@@ -14,4 +14,10 @@ export class DashboardController {
     const result = await DashboardService.getOperacional(periodo, ref, tagType);
     return reply.send(result);
   }
+
+  static async receitaDiaria(request: FastifyRequest, reply: FastifyReply) {
+  const { periodo, ref, tagType } = receitaDiariaQuerySchema.parse(request.query);
+  const result = await DashboardService.getReceitaDiaria(periodo, ref, tagType);
+  return reply.send(result);
+}
 }

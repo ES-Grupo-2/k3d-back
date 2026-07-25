@@ -1,9 +1,11 @@
 import { prisma } from "../../lib/clientPrisma";
+import { Prisma } from "@prisma/client";
 import { getDateRange } from "../../utils/dateFilters";
 import {
   Periodo,
   DashboardFinanceiroResponse,
   DashboardOperacionalResponse,
+  DashboardReceitaDiariaResponse,
 } from "./dashboard.types";
 
 export class DashboardService {
@@ -73,6 +75,48 @@ export class DashboardService {
       dataFim: end.toISOString(),
       tags,
       totalPedidos,
+    };
+
+
+
+    
+  }
+
+  static async getReceitaDiaria(
+    periodo: Periodo,
+    ref?: string,
+    tagType?: string,
+  ): Promise<DashboardReceitaDiariaResponse> {
+    const { start, end } = getDateRange(periodo, ref);
+
+    const rows = await prisma.$queryRaw<
+      { dia: Date; receita_total: number; total_pedidos: bigint }[]
+    >(
+      Prisma.sql`
+      SELECT
+        DATE("created_at") AS dia,
+        COALESCE(SUM("price"), 0) AS receita_total,
+        COUNT("id") AS total_pedidos
+      FROM "Order"
+      WHERE "created_at" >= ${start}
+        AND "created_at" <= ${end}
+        ${tagType ? Prisma.sql`AND "tagType" = ${tagType}` : Prisma.empty}
+      GROUP BY DATE("created_at")
+      ORDER BY DATE("created_at") ASC
+    `
+    );
+
+    const dias = rows.map((r) => ({
+      data: r.dia.toISOString().split("T")[0],
+      receitaTotal: Number(r.receita_total),
+      totalPedidos: Number(r.total_pedidos),
+    }));
+
+    return {
+      periodo,
+      dataInicio: start.toISOString(),
+      dataFim: end.toISOString(),
+      dias,
     };
   }
 }
