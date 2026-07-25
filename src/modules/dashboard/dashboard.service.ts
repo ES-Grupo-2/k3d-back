@@ -95,7 +95,7 @@ export class DashboardService {
       Prisma.sql`
       SELECT
         DATE("created_at") AS dia,
-        COALESCE(SUM("amount_paid"), 0) AS receita_total,
+        COALESCE(SUM("price"), 0) AS receita_total,
         COUNT("id") AS total_pedidos
       FROM "orders"
       WHERE "created_at" >= ${start}
