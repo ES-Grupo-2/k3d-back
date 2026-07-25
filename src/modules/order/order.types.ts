@@ -26,8 +26,12 @@ export const moveOrderSchema = z.object({
 
 export const getOrderQuerySchema = paginationQuerySchema.extend({
   title: z.string().trim().optional().or(z.literal("")),
+  search: z.string().trim().optional().or(z.literal("")),
+  client_name: z.string().trim().optional().or(z.literal("")),
   section: z.enum(["PENDENTE", "FAZENDO", "FINALIZADO"]).optional().or(z.literal("")),
   status: z.string().trim().optional().or(z.literal("")),
+  payment_method: z.string().trim().optional().or(z.literal("")),
+  payment: z.string().trim().optional().or(z.literal("")),
   machine: z.string().trim().optional().or(z.literal("")),
   client_id: z.coerce.number().int().positive().optional(),
   tagType: z.string().trim().optional().or(z.literal("")),

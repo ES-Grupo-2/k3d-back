@@ -359,3 +359,84 @@ describe("RF-05 — Edição de Pedido no Kanban (Blackbox)", () => {
     });
   });
 });
+
+describe("RF-07 — Busca de Pedidos por Cliente e Título (Blackbox)", () => {
+  it("TC-RF07-01 - Buscar pedidos informando o nome do cliente no parâmetro de busca", async () => {
+    orderRepository.findMany.mockResolvedValue([
+      {
+        id: 100,
+        title: "Suporte de Controle PS5",
+        clientId: 1,
+        client: {
+          id: 1,
+          name: "Carlos Eduardo Santos",
+          phone: "(83) 98888-7766",
+        },
+      },
+    ]);
+    orderRepository.count.mockResolvedValue(1);
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/orders?title=Carlos",
+        headers: {
+          authorization: authHeaderToken("OPERACIONAL"),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.data).toHaveLength(1);
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              { client: { name: { contains: "Carlos", mode: "insensitive" } } },
+            ]),
+          }),
+        })
+      );
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("TC-RF07-02 - Buscar pedidos filtrando pela forma de pagamento payment_method", async () => {
+    orderRepository.findMany.mockResolvedValue([
+      {
+        id: 200,
+        title: "Impressão Chaveiro Kria3D",
+        payment_method: "PIX",
+      },
+    ]);
+    orderRepository.count.mockResolvedValue(1);
+
+    const app = buildApp({ logger: false });
+    try {
+      const response = await app.inject({
+        method: "GET",
+        url: "/orders?payment_method=PIX",
+        headers: {
+          authorization: authHeaderToken("OPERACIONAL"),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.data).toHaveLength(1);
+      expect(orderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            payment_method: { in: expect.arrayContaining(["PIX"]) },
+          }),
+        })
+      );
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+

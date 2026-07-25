@@ -124,16 +124,53 @@ export class OrderService {
     Object.entries(filters).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") return;
 
+      if (key === "title" || key === "search") {
+        const searchTerm = String(value);
+        const titleOrConditions: Prisma.OrderWhereInput[] = [
+          { title: { contains: searchTerm, mode: "insensitive" } },
+          { client: { name: { contains: searchTerm, mode: "insensitive" } } },
+        ];
+
+        const numValue = Number(searchTerm);
+        if (!isNaN(numValue) && Number.isInteger(numValue) && numValue > 0) {
+          titleOrConditions.push({ id: numValue });
+        }
+
+        compiledWhere["OR"] = titleOrConditions;
+        return;
+      }
+
+      if (key === "client_name") {
+        compiledWhere["client"] = {
+          name: { contains: String(value), mode: "insensitive" },
+        };
+        return;
+      }
+
+      if (key === "payment_method" || key === "payment") {
+        const val = String(value);
+        const synonymMap: Record<string, string[]> = {
+          "CREDIT_CARD": ["CREDIT_CARD", "CARTAO_CREDITO"],
+          "CARTAO_CREDITO": ["CREDIT_CARD", "CARTAO_CREDITO"],
+          "DEBIT_CARD": ["DEBIT_CARD", "CARTAO_DEBITO"],
+          "CARTAO_DEBITO": ["DEBIT_CARD", "CARTAO_DEBITO"],
+          "CASH": ["CASH", "DINHEIRO"],
+          "DINHEIRO": ["CASH", "DINHEIRO"],
+          "PIX": ["PIX"],
+        };
+
+        const paymentValues = synonymMap[val] || [val];
+        compiledWhere["payment_method"] = { in: paymentValues };
+        return;
+      }
+
       const prismaField = key === "client_id" ? "clientId" : key;
       const fieldInfo = fieldsDefinition?.find((f) => f.name === prismaField);
       if (!fieldInfo) return;
 
       const strategy: Record<string, () => void> = {
         String: () => {
-          compiledWhere[prismaField] =
-            prismaField === "title"
-              ? { contains: value, mode: "insensitive" }
-              : value;
+          compiledWhere[prismaField] = value;
         },
         Int: () => {
           compiledWhere[prismaField] = Number(value);
