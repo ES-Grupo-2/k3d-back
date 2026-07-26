@@ -263,8 +263,8 @@ describe("RF-14 — Controle de Acesso por Perfil (Blackbox)", () => {
   it("TC-RF14-03 - Usuário Gerente acessa o Dashboard Financeiro", async () => {
     const orderRepo = (prisma as any).order;
     orderRepo.aggregate.mockResolvedValue({
-      _sum: { amount_paid: 0, cost: 0 },
-      _avg: { amount_paid: 0, price: 0 },
+      _sum: { price: 0, cost: 0 },
+      _avg: { price: 0 },
       _count: { id: 0 },
     });
 

@@ -43,8 +43,8 @@ async function inject(url: string, token?: string) {
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
 const baseAggregateResult = {
-  _sum: { amount_paid: 1000, cost: 400 },
-  _avg: { amount_paid: 100, price: 120 },
+  _sum: { price: 1000, cost: 400 },
+  _avg: { price: 100 },
   _count: { id: 10 },
 };
 
@@ -78,7 +78,7 @@ describe("dashboard routes", () => {
         receitaTotal: 1000,
         custoTotal: 400,
         lucroTotal: 600,
-        precoMedio: 120,
+        precoMedio: 100,
         ticketMedio: 100,
         totalPedidos: 10,
       });
@@ -87,8 +87,8 @@ describe("dashboard routes", () => {
 
     it("calculates lucroTotal correctly when cost exceeds revenue", async () => {
       orderRepository.aggregate.mockResolvedValue({
-        _sum: { amount_paid: 300, cost: 500 },
-        _avg: { amount_paid: 30, price: 50 },
+        _sum: { price: 300, cost: 500 },
+        _avg: { price: 50 },
         _count: { id: 6 },
       });
 
@@ -104,8 +104,8 @@ describe("dashboard routes", () => {
 
     it("defaults sums/averages to 0 when there are no orders in range", async () => {
       orderRepository.aggregate.mockResolvedValue({
-        _sum: { amount_paid: null, cost: null },
-        _avg: { amount_paid: null, price: null },
+        _sum: { price: null, cost: null },
+        _avg: { price: null },
         _count: { id: 0 },
       });
 
