@@ -22,13 +22,13 @@ export class DashboardService {
     if (tagType) where.tagType = tagType;
 
     const result = await prisma.order.aggregate({
-      _sum: { amount_paid: true, cost: true },
-      _avg: { amount_paid: true, price: true },
+      _sum: { price: true, cost: true },
+      _avg: { price: true },
       _count: { id: true },
       where,
     });
 
-    const receitaTotal = result._sum.amount_paid ?? 0;
+    const receitaTotal = result._sum.price ?? 0;
     const custoTotal = result._sum.cost ?? 0;
 
     return {
@@ -39,7 +39,7 @@ export class DashboardService {
       custoTotal,
       lucroTotal: receitaTotal - custoTotal,
       precoMedio: result._avg.price ?? 0,
-      ticketMedio: result._avg.amount_paid ?? 0,
+      ticketMedio: result._avg.price ?? 0,
       totalPedidos: result._count.id,
     };
   }
@@ -79,7 +79,7 @@ export class DashboardService {
 
 
 
-    
+
   }
 
   static async getReceitaDiaria(

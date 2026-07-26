@@ -40,8 +40,8 @@ async function injectGet(url: string, token?: string): Promise<any> {
 }
 
 const baseAggregateResult = {
-  _sum: { amount_paid: 1000, cost: 400 },
-  _avg: { amount_paid: 100, price: 120 },
+  _sum: { price: 1000, cost: 400 },
+  _avg: { price: 100 },
   _count: { id: 10 },
 };
 
@@ -111,7 +111,7 @@ describe("RF-11 — Visualização do Dashboard Financeiro (Blackbox)", () => {
       receitaTotal: 1000,
       custoTotal: 400,
       lucroTotal: 600,
-      precoMedio: 120,
+      precoMedio: 100,
       ticketMedio: 100,
       totalPedidos: 10,
     });
@@ -119,8 +119,8 @@ describe("RF-11 — Visualização do Dashboard Financeiro (Blackbox)", () => {
 
   it("TC-RF11-02 - Selecionar o filtro de período 'Semanal' no Dashboard Financeiro", async () => {
     orderRepository.aggregate.mockResolvedValue({
-      _sum: { amount_paid: 200, cost: 80 },
-      _avg: { amount_paid: 100, price: 110 },
+      _sum: { price: 200, cost: 80 },
+      _avg: { price: 100 },
       _count: { id: 2 },
     });
 
@@ -136,8 +136,8 @@ describe("RF-11 — Visualização do Dashboard Financeiro (Blackbox)", () => {
 
   it("TC-RF11-03 - Selecionar o filtro de período 'Semestral' no Dashboard Financeiro", async () => {
     orderRepository.aggregate.mockResolvedValue({
-      _sum: { amount_paid: 5000, cost: 2000 },
-      _avg: { amount_paid: 100, price: 120 },
+      _sum: { price: 5000, cost: 2000 },
+      _avg: { price: 100 },
       _count: { id: 50 },
     });
 
@@ -155,8 +155,8 @@ describe("RF-11 — Visualização do Dashboard Financeiro (Blackbox)", () => {
 describe("RF-12 — Filtros por Tempo nos Dashboards (Blackbox)", () => {
   it("TC-RF12-01 - Selecionar o período 'Semanal' no filtro de tempo", async () => {
     orderRepository.aggregate.mockResolvedValue({
-      _sum: { amount_paid: 150, cost: 50 },
-      _avg: { amount_paid: 75, price: 90 },
+      _sum: { price: 150, cost: 50 },
+      _avg: { price: 75 },
       _count: { id: 2 },
     });
 
@@ -183,8 +183,8 @@ describe("RF-12 — Filtros por Tempo nos Dashboards (Blackbox)", () => {
 
   it("TC-RF12-03 - Selecionar o período 'Semestral' no filtro de tempo", async () => {
     orderRepository.aggregate.mockResolvedValue({
-      _sum: { amount_paid: 6000, cost: 2500 },
-      _avg: { amount_paid: 120, price: 130 },
+      _sum: { price: 6000, cost: 2500 },
+      _avg: { price: 120 },
       _count: { id: 50 },
     });
 
